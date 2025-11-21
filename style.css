@@ -195,28 +195,25 @@ body {
     position: fixed;
     bottom: 30px;
     left: 30px;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background-color: #ffffff;
-    color: #000000;
-    border: 2px solid #000000;
+    padding: 8px 16px;
+    background-color: #000000;
+    color: #ffffff;
+    border: none;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.9rem;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
+    border-radius: 4px;
+    transition: all 0.2s ease;
     z-index: 100;
 }
 
 .import-btn:hover {
-    background-color: #000000;
-    color: #ffffff;
-    transform: scale(1.1);
+    background-color: #333333;
+    transform: translateY(-1px);
 }
 
 .import-btn:active {
-    transform: scale(0.95);
+    transform: translateY(0);
 }
 
 /* モーダル */
@@ -246,19 +243,6 @@ body {
     max-height: 80vh;
     display: flex;
     flex-direction: column;
-}
-
-.modal-content h2 {
-    margin: 0 0 10px 0;
-    font-size: 1.5rem;
-    font-weight: 500;
-}
-
-.modal-content p {
-    margin: 0 0 20px 0;
-    font-size: 0.9rem;
-    color: #666;
-    line-height: 1.5;
 }
 
 #importTextarea {
@@ -336,12 +320,12 @@ body {
     right: 80px;
   }
 
-  .import-btn {
-    width: 40px;
-    height: 40px;
-    bottom: 20px;
-    left: 20px;
-  }
+    .import-btn {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+        bottom: 20px;
+        left: 20px;
+    }
 
   .modal-content {
     padding: 20px;
