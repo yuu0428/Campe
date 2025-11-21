@@ -55,6 +55,27 @@ function saveToStorage() {
 // 表示を更新
 function updateDisplay() {
   memoContent.textContent = slides[currentSlideIndex].content;
+  adjustFontSize();
+}
+
+// 文字数に応じてフォントサイズを自動調整
+function adjustFontSize() {
+  const textLength = memoContent.textContent.length;
+  let fontSize;
+  
+  if (textLength < 50) {
+    fontSize = '2.5rem';
+  } else if (textLength < 100) {
+    fontSize = '2rem';
+  } else if (textLength < 200) {
+    fontSize = '1.5rem';
+  } else if (textLength < 300) {
+    fontSize = '1.2rem';
+  } else {
+    fontSize = '1rem';
+  }
+  
+  memoContent.style.fontSize = fontSize;
 }
 
 // ページカウンターを更新
@@ -218,8 +239,11 @@ function importMemos() {
 
 // イベントリスナーを設定
 function attachEventListeners() {
-  // メモの編集を保存
-  memoContent.addEventListener("input", saveCurrentSlide);
+  // メモの内容が変更されたら保存 & フォントサイズ調整
+  memoContent.addEventListener("input", () => {
+    saveCurrentSlide();
+    adjustFontSize();
+  });
 
   // ストップウォッチコントロール
   startBtn.addEventListener("click", startStopwatch);

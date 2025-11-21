@@ -72,12 +72,12 @@ body {
 /* メモコンテナ（中央） */
 .memo-container {
   position: fixed;
-  top: 50%;
+  top: 100px;  /* 上部の要素を避ける */
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   width: 80%;
   max-width: 900px;
-  height: 60%;
+  bottom: 120px;  /* 下部のボタンを避ける */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -299,7 +299,8 @@ body {
 @media (max-width: 768px) {
   .memo-container {
     width: 90%;
-    height: 70%;
+    top: 80px;  /* モバイルでは上部の余白を少し狭く */
+    bottom: 100px;  /* モバイルでは下部の余白も調整 */
   }
 
   .stopwatch-controls {
