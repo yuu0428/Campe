@@ -190,6 +190,126 @@ body {
   transform: scale(0.95);
 }
 
+/* インポートボタン（左下） */
+.import-btn {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 100;
+}
+
+.import-btn:hover {
+    background-color: #000000;
+    color: #ffffff;
+    transform: scale(1.1);
+}
+
+.import-btn:active {
+    transform: scale(0.95);
+}
+
+/* モーダル */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content h2 {
+    margin: 0 0 10px 0;
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+.modal-content p {
+    margin: 0 0 20px 0;
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.5;
+}
+
+#importTextarea {
+    width: 100%;
+    min-height: 300px;
+    padding: 15px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 1rem;
+    border: 2px solid #000000;
+    border-radius: 4px;
+    resize: vertical;
+    margin-bottom: 20px;
+    outline: none;
+    white-space: pre-wrap;
+}
+
+#importTextarea:focus {
+    border-color: #333333;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.modal-btn {
+    padding: 10px 20px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.9rem;
+    border: 2px solid #000000;
+    background-color: #ffffff;
+    color: #000000;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.modal-btn.primary {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+.modal-btn.primary:hover {
+    background-color: #333333;
+}
+
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
   .memo-container {
@@ -214,5 +334,20 @@ body {
     height: 40px;
     bottom: 20px;
     right: 80px;
+  }
+
+  .import-btn {
+    width: 40px;
+    height: 40px;
+    bottom: 20px;
+    left: 20px;
+  }
+
+  .modal-content {
+    padding: 20px;
+  }
+
+  #importTextarea {
+    min-height: 200px;
   }
 }

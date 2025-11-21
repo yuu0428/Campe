@@ -18,6 +18,11 @@ const resetBtn = document.getElementById("resetBtn");
 const addSlideBtn = document.getElementById("addSlideBtn");
 const deleteSlideBtn = document.getElementById("deleteSlideBtn");
 const memoContainer = document.getElementById("memoContainer");
+const importBtn = document.getElementById("importBtn");
+const importModal = document.getElementById("importModal");
+const importTextarea = document.getElementById("importTextarea");
+const importConfirmBtn = document.getElementById("importConfirmBtn");
+const importCancelBtn = document.getElementById("importCancelBtn");
 
 // 初期化
 function init() {
@@ -164,6 +169,53 @@ function resetStopwatch() {
   updateStopwatch();
 }
 
+// インポートモーダルを開く
+function openImportModal() {
+  importModal.classList.add("show");
+  importTextarea.value = "";
+  importTextarea.focus();
+}
+
+// インポートモーダルを閉じる
+function closeImportModal() {
+  importModal.classList.remove("show");
+  importTextarea.value = "";
+}
+
+// メモをインポート
+function importMemos() {
+  const text = importTextarea.value.trim();
+  
+  if (!text) {
+    closeImportModal();
+    return;
+  }
+  
+  // 空行（改行2つ以上）で分割
+  const newSlides = text
+    .split(/\n\s*\n/)
+    .map(content => content.trim())
+    .filter(content => content.length > 0)
+    .map(content => ({ content }));
+  
+  if (newSlides.length === 0) {
+    closeImportModal();
+    return;
+  }
+  
+  // 現在のスライドを保存してから置き換え
+  slides = newSlides;
+  currentSlideIndex = 0;
+  
+  updateDisplay();
+  updatePageCounter();
+  updateDeleteButton();
+  saveToStorage();
+  
+  closeImportModal();
+}
+
+
 // イベントリスナーを設定
 function attachEventListeners() {
   // メモの編集を保存
@@ -179,6 +231,18 @@ function attachEventListeners() {
 
   // スライド削除
   deleteSlideBtn.addEventListener("click", deleteSlide);
+
+  // インポートモーダル
+  importBtn.addEventListener("click", openImportModal);
+  importConfirmBtn.addEventListener("click", importMemos);
+  importCancelBtn.addEventListener("click", closeImportModal);
+  
+  // モーダル外クリックで閉じる
+  importModal.addEventListener("click", (e) => {
+    if (e.target === importModal) {
+      closeImportModal();
+    }
+  });
 
   // タップで次のスライドへ（メモエリア以外）
   document.body.addEventListener("click", (e) => {
