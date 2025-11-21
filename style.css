@@ -1,0 +1,218 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Noto Sans JP", sans-serif;
+  background-color: #ffffff;
+  color: #000000;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  user-select: none;
+  touch-action: pan-x;
+}
+
+/* ページカウンター（左上） */
+.page-counter {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  z-index: 100;
+}
+
+/* ストップウォッチ（右上） */
+.stopwatch-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  text-align: center;
+  z-index: 100;
+}
+
+.stopwatch-display {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stopwatch-controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.control-btn {
+  background-color: #000000;
+  color: #ffffff;
+  border: none;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-family: "Noto Sans JP", sans-serif;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+  background-color: #333333;
+  transform: translateY(-1px);
+}
+
+.control-btn:active {
+  transform: translateY(0);
+}
+
+/* メモコンテナ（中央） */
+.memo-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  max-width: 900px;
+  height: 60%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.memo-content {
+  font-size: 1rem;
+  line-height: 1.8;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px;
+  outline: none;
+  cursor: text;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.memo-content:empty:before {
+  content: attr(data-placeholder);
+  color: #999999;
+}
+
+.memo-content:focus:before {
+  content: "";
+}
+
+/* スクロールバーのスタイリング */
+.memo-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.memo-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.memo-content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.memo-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* プラスボタン（右下） */
+.add-slide-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #000000;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.add-slide-btn:hover {
+  background-color: #333333;
+  transform: scale(1.1);
+}
+
+.add-slide-btn:active {
+  transform: scale(0.95);
+}
+
+/* 削除ボタン（右下、プラスボタンの左） */
+.delete-slide-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 100px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.delete-slide-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.delete-slide-btn:hover {
+  background-color: #000000;
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.delete-slide-btn:active {
+  transform: scale(0.95);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .memo-container {
+    width: 90%;
+    height: 70%;
+  }
+
+  .stopwatch-controls {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .add-slide-btn {
+    width: 48px;
+    height: 48px;
+    bottom: 20px;
+    right: 20px;
+  }
+
+  .delete-slide-btn {
+    width: 40px;
+    height: 40px;
+    bottom: 20px;
+    right: 80px;
+  }
+}
