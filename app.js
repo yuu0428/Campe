@@ -6,6 +6,7 @@ let stopwatchTime = 0; // 秒単位
 let isRunning = false;
 let touchStartX = 0;
 let touchEndX = 0;
+let touchStartY = 0;
 
 // DOM要素の取得
 const memoContent = document.getElementById("memoContent");
@@ -18,6 +19,7 @@ const resetBtn = document.getElementById("resetBtn");
 const addSlideBtn = document.getElementById("addSlideBtn");
 const deleteSlideBtn = document.getElementById("deleteSlideBtn");
 const memoContainer = document.getElementById("memoContainer");
+const editBtn = document.getElementById("editBtn");
 const importBtn = document.getElementById("importBtn");
 const importModal = document.getElementById("importModal");
 const importTextarea = document.getElementById("importTextarea");
@@ -63,16 +65,17 @@ function adjustFontSize() {
   const textLength = memoContent.textContent.length;
   let fontSize;
   
-  if (textLength < 50) {
-    fontSize = '2.5rem';
-  } else if (textLength < 100) {
+  // 基本サイズは2rem、文字数が多い時に段階的に小さくする
+  if (textLength < 100) {
     fontSize = '2rem';
   } else if (textLength < 200) {
     fontSize = '1.5rem';
-  } else if (textLength < 300) {
+  } else if (textLength < 400) {
     fontSize = '1.2rem';
-  } else {
+  } else if (textLength < 600) {
     fontSize = '1rem';
+  } else {
+    fontSize = '0.8rem';
   }
   
   memoContent.style.fontSize = fontSize;
@@ -132,6 +135,10 @@ function nextSlide() {
   saveCurrentSlide();
   if (currentSlideIndex < slides.length - 1) {
     currentSlideIndex++;
+    // 編集モードを解除
+    if (isEditMode) {
+      toggleEditMode();
+    }
     updateDisplay();
     updatePageCounter();
   }
@@ -142,6 +149,10 @@ function prevSlide() {
   saveCurrentSlide();
   if (currentSlideIndex > 0) {
     currentSlideIndex--;
+    // 編集モードを解除
+    if (isEditMode) {
+      toggleEditMode();
+    }
     updateDisplay();
     updatePageCounter();
   }
@@ -188,6 +199,25 @@ function resetStopwatch() {
   stopStopwatch();
   stopwatchTime = 0;
   updateStopwatch();
+}
+
+// 編集モードの切り替え
+let isEditMode = false;
+
+function toggleEditMode() {
+  isEditMode = !isEditMode;
+  
+  if (isEditMode) {
+    memoContent.contentEditable = "true";
+    memoContent.classList.add("editable");
+    editBtn.classList.add("active");
+    memoContent.focus();
+  } else {
+    memoContent.contentEditable = "false";
+    memoContent.classList.remove("editable");
+    editBtn.classList.remove("active");
+    saveCurrentSlide();
+  }
 }
 
 // インポートモーダルを開く
@@ -256,6 +286,9 @@ function attachEventListeners() {
   // スライド削除
   deleteSlideBtn.addEventListener("click", deleteSlide);
 
+  // 編集モード切り替え
+  editBtn.addEventListener("click", toggleEditMode);
+
   // インポートモーダル
   importBtn.addEventListener("click", openImportModal);
   importConfirmBtn.addEventListener("click", importMemos);
@@ -286,6 +319,7 @@ function attachEventListeners() {
     "touchstart",
     (e) => {
       touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
     },
     { passive: true }
   );
@@ -342,12 +376,26 @@ function handleSwipe() {
   const diff = touchStartX - touchEndX;
 
   if (Math.abs(diff) > swipeThreshold) {
+    // スワイプ判定
     if (diff > 0) {
       // 左スワイプ → 次へ
       nextSlide();
     } else {
       // 右スワイプ → 前へ
       prevSlide();
+    }
+  } else {
+    // タップ判定（スワイプではない）
+    // ボタンやメモエリアをタップした場合は除外
+    const target = document.elementFromPoint(touchEndX, touchStartY);
+    if (!target) return;
+    
+    const isButton = target.closest('button') || target.tagName === 'BUTTON';
+    const isMemoArea = memoContainer.contains(target);
+    const isModal = importModal.contains(target);
+    
+    if (!isButton && !isMemoArea && !isModal) {
+      nextSlide();
     }
   }
 }
