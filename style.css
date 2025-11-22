@@ -329,8 +329,13 @@ body {
   }
 
   .control-btn {
-    font-size: 0.7rem;
-    padding: 5px 10px;
+    width: 28px;
+    height: 28px;
+    font-size: 0.65rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .add-slide-btn {
