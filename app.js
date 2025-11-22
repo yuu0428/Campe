@@ -386,15 +386,15 @@ function handleSwipe() {
     }
   } else {
     // タップ判定（スワイプではない）
-    // ボタンやメモエリアをタップした場合は除外
+    // 機能ボタンをタップした場合のみ除外
     const target = document.elementFromPoint(touchEndX, touchStartY);
     if (!target) return;
     
     const isButton = target.closest('button') || target.tagName === 'BUTTON';
-    const isMemoArea = memoContainer.contains(target);
     const isModal = importModal.contains(target);
     
-    if (!isButton && !isMemoArea && !isModal) {
+    // ボタンやモーダル以外をタップした場合は次のページへ
+    if (!isButton && !isModal) {
       nextSlide();
     }
   }
