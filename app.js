@@ -377,25 +377,39 @@ function handleSwipe() {
 
   if (Math.abs(diff) > swipeThreshold) {
     // スワイプ判定
+    console.log('🔄 Swipe detected, diff:', diff);
     if (diff > 0) {
       // 左スワイプ → 次へ
+      console.log('⬅️ Left swipe - Next slide');
       nextSlide();
     } else {
       // 右スワイプ → 前へ
+      console.log('➡️ Right swipe - Previous slide');
       prevSlide();
     }
   } else {
     // タップ判定（スワイプではない）
-    // 機能ボタンをタップした場合のみ除外
     const target = document.elementFromPoint(touchEndX, touchStartY);
-    if (!target) return;
+    console.log('👆 Tap detected at X:', touchEndX, 'Y:', touchStartY);
+    console.log('   Target element:', target);
+    
+    if (!target) {
+      console.log('   ❌ No target found');
+      return;
+    }
     
     const isButton = target.closest('button') || target.tagName === 'BUTTON';
     const isModal = importModal.contains(target);
     
+    console.log('   Is button?', isButton);
+    console.log('   Is modal?', isModal);
+    
     // ボタンやモーダル以外をタップした場合は次のページへ
     if (!isButton && !isModal) {
+      console.log('   ✅ Moving to next slide');
       nextSlide();
+    } else {
+      console.log('   ⛔ Button or modal - no navigation');
     }
   }
 }
