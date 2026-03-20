@@ -60,25 +60,31 @@ function updateDisplay() {
   adjustFontSize();
 }
 
-// 文字数に応じてフォントサイズを自動調整
+// 収まるまでフォントサイズを自動調整
 function adjustFontSize() {
-  const textLength = memoContent.textContent.length;
-  let fontSize;
-  
-  // 基本サイズは2rem、文字数が多い時に段階的に小さくする
-  if (textLength < 100) {
-    fontSize = '2rem';
-  } else if (textLength < 200) {
-    fontSize = '1.5rem';
-  } else if (textLength < 400) {
-    fontSize = '1.2rem';
-  } else if (textLength < 600) {
-    fontSize = '1rem';
-  } else {
-    fontSize = '0.8rem';
+  const content = memoContent.textContent.trim();
+  if (!content) {
+    memoContent.style.fontSize = "2rem";
+    return;
   }
-  
-  memoContent.style.fontSize = fontSize;
+
+  const rootFontSize = parseFloat(
+    getComputedStyle(document.documentElement).fontSize
+  );
+  let fontSizePx = rootFontSize * 2;
+
+  memoContent.style.fontSize = `${fontSizePx}px`;
+
+  let guard = 0;
+  while (
+    (memoContent.scrollHeight > memoContent.clientHeight ||
+      memoContent.scrollWidth > memoContent.clientWidth) &&
+    guard < 500
+  ) {
+    fontSizePx *= 0.96;
+    memoContent.style.fontSize = `${fontSizePx}px`;
+    guard++;
+  }
 }
 
 // ページカウンターを更新
@@ -368,6 +374,9 @@ function attachEventListeners() {
       prevSlide();
     }
   });
+
+  // ビューポート変更時に再計算
+  window.addEventListener("resize", adjustFontSize);
 }
 
 // スワイプ処理
