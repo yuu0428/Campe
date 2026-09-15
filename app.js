@@ -101,13 +101,17 @@ function elapsedSeconds() {
 function updateReadingTarget() {
   const duration = readingSeconds(slides[currentSlideIndex]);
   const target = slides.slice(0, currentSlideIndex + 1).reduce((sum, slide) => sum + readingSeconds(slide), 0);
-  $("readingDuration").textContent = `このページ：${duration}秒${slides[currentSlideIndex].durationSeconds == null ? "（目安）" : ""}`;
-  $("readingDeadline").textContent = `開始から${formatTarget(target)}までに読み切る`;
+  $("readingDuration").textContent = `${duration}秒${slides[currentSlideIndex].durationSeconds == null ? "≈" : ""}`;
+  const deadlineLabel = `開始から${formatTarget(target)}までに読み切る`;
+  $("readingDuration").setAttribute("title", `このページを読む時間：${duration}秒`);
+  $("readingDeadline").textContent = `→${Math.floor(target / 60)}:${String(target % 60).padStart(2, "0")}`;
+  $("readingDeadline").setAttribute("aria-label", deadlineLabel);
+  $("readingDeadline").setAttribute("title", deadlineLabel);
   const remaining = target - elapsedSeconds();
   const active = startedAt !== null || elapsed > 0;
   const state = !active ? "ready" : remaining < 0 ? "late" : remaining <= Math.min(10, duration * 0.2) ? "soon" : "on-time";
   $("pace").setAttribute("data-state", state);
-  $("paceStatus").textContent = !active ? "開始前" : remaining < 0 ? `${-remaining}秒遅れ` : remaining === 0 ? "切り替えの目安" : `あと${remaining}秒`;
+  $("paceStatus").textContent = !active ? "開始前" : remaining < 0 ? `${-remaining}秒遅れ` : remaining === 0 ? "切替" : `あと${remaining}秒`;
   $("paceProgress").value = active && duration > 0 ? Math.max(0, Math.min(1, (duration - remaining) / duration)) : 0;
   $("paceProgress").setAttribute("data-state", state);
 }
@@ -303,7 +307,8 @@ function updateTimer() {
   if (hours > 0) parts.unshift(String(hours).padStart(2, "0"));
   $("stopwatchDisplay").textContent = parts.join(":");
   const timerAction = startedAt === null ? (elapsed > 0 ? "再開" : "開始") : "一時停止";
-  $("startBtn").textContent = startedAt === null ? timerAction : "⏸️";
+  $("playIcon").style.display = startedAt === null ? "" : "none";
+  $("pauseIcon").style.display = startedAt === null ? "none" : "";
   $("startBtn").setAttribute("aria-label", timerAction);
   $("startBtn").setAttribute("title", timerAction);
 }

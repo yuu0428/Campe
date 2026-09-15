@@ -91,3 +91,24 @@ header { padding-top: 4px; padding-bottom: 4px; }
 .reading-target { margin-top: 0; line-height: 1.4; }
 .pace { line-height: 1.5; }
 #paceProgress { margin-top: 1px; }
+
+/* One row, with the elapsed time and controls always visible. */
+header { position: relative; padding: 4px 6px; }
+.timer { gap: 6px; }
+#stopwatchDisplay { flex: none; }
+.time-details { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; scrollbar-width: none; font-size: 12px; font-variant-numeric: tabular-nums; }
+.time-details::-webkit-scrollbar { display: none; }
+.time-details > * { flex: none; }
+.timer-actions { flex: none; gap: 2px; }
+.timer-actions button, #resetBtn, #menuBtn { width: 26px; min-height: 30px; height: 30px; padding: 2px; }
+#startBtn { width: 32px; font-size: 12px; }
+#paceProgress { position: absolute; bottom: 0; left: 0; margin: 0; height: 2px; }
+@media (min-width: 800px) { header { padding-left: max(6px, calc((100% - 820px) / 2)); padding-right: max(6px, calc((100% - 820px) / 2)); } }
+
+.timer-actions button { display: flex; align-items: center; justify-content: center; }
+.timer-actions svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.time-details { gap: 4px; }
+.timer { gap: 3px; }
+.timer-actions { gap: 0; }
+.timer-actions button, #startBtn, #resetBtn, #menuBtn { width: 24px; }
+.time-details { gap: 3px; }

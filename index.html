@@ -10,11 +10,10 @@
 <body>
   <header>
     <div class="timer">
-      <div><output id="stopwatchDisplay" aria-label="経過時間">00:00</output></div>
-      <div class="timer-actions"><button id="startBtn" class="primary">開始</button><button id="resetBtn" class="subtle" aria-label="リセット" title="リセット">🔄</button><button id="menuBtn" class="subtle" aria-label="メニューを開く" aria-haspopup="dialog">⋯</button></div>
+      <output id="stopwatchDisplay" aria-label="経過時間">00:00</output>
+      <div class="time-details" aria-label="原稿の進行目安"><span id="readingDuration"></span><strong id="readingDeadline"></strong><span id="pace"><strong id="paceStatus"></strong></span></div>
+      <div class="timer-actions"><button id="startBtn" class="primary" aria-label="開始" title="開始"><svg id="playIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z"/></svg><svg id="pauseIcon" viewBox="0 0 24 24" aria-hidden="true" style="display:none"><path d="M8 5v14M16 5v14"/></svg></button><button id="resetBtn" class="subtle" aria-label="リセット" title="リセット"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></svg></button><button id="menuBtn" class="subtle" aria-label="メニューを開く" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></div>
     </div>
-    <div class="reading-target" aria-label="読み終える目安"><strong id="readingDeadline"></strong></div>
-    <div class="pace" id="pace"><span id="readingDuration"></span><strong id="paceStatus"></strong></div>
     <progress id="paceProgress" max="1" value="0" aria-label="このページの予定時間の進み具合"></progress>
     <p id="status" role="status" hidden></p>
   </header>

@@ -23,7 +23,7 @@ assert.deepEqual(parse('普通の原稿\n\n次の原稿'), [{content:'普通の�
 for (const text of [valid.replace('2｜', '3｜'), valid.replace('23秒', '0秒'), valid.replace('v1', 'v2'), '【Campe原稿 v1】\n\n【スライド 1｜23秒】', valid.replace('23秒','999999秒')]) assert.throws(() => parse(text));
 context.input = valid;
 vm.runInContext('slides = parseImport(input); currentSlideIndex=1;render();save();load();render()',context);
-assert.equal(element('readingDeadline').textContent, '開始から1分23秒までに読み切る');
+assert.equal(element('readingDeadline').textContent, '→1:23');
 assert.equal(element('memoContent').textContent, '次の原稿。');
 if (process.argv[2]) {
   const imported = parse(fs.readFileSync(process.argv[2], 'utf8'));
@@ -59,7 +59,7 @@ assert.equal(element('paceStatus').textContent,'開始前');
 vm.runInContext('elapsed=70000;updateTimer()',context);
 assert.equal(element('paceStatus').textContent,'あと13秒');
 vm.runInContext('elapsed=83000;updateTimer()',context);
-assert.equal(element('paceStatus').textContent,'切り替えの目安');
+assert.equal(element('paceStatus').textContent,'切替');
 vm.runInContext('elapsed=90000;updateTimer()',context);
 assert.equal(element('paceStatus').textContent,'7秒遅れ');
 assert.equal(element('paceProgress').value,1);
