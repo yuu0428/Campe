@@ -53,3 +53,8 @@ textarea { display: block; width: 100%; min-height: 100px; height: 42dvh; flex-s
 .duration-setting { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
 #durationInput { width: 100px; min-height: 44px; padding: 8px 10px; border: 1px solid #c5ccbd; border-radius: 10px; background: white; color: inherit; font: inherit; font-size: 16px; }
 #durationInput:invalid { border-color: #9b3d32; }
+
+.display-modes { display: flex; gap: 6px; margin-bottom: 8px; }
+.display-modes button { flex: 1; font-size: 12px; padding: 8px; }
+.display-modes button[aria-pressed="true"] { background: #e1e7dc; border-color: #315c46; color: #234332; }
+#memoContent { user-select: none; -webkit-user-select: none; }

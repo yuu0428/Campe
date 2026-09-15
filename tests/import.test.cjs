@@ -4,14 +4,14 @@ const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const elements = new Map();
 function element(id) {
-  if (!elements.has(id)) elements.set(id, { value: '', textContent: '', style: { setProperty() {} }, addEventListener() {}, focus() {} });
+  if (!elements.has(id)) elements.set(id, { value: '', textContent: '', style: { setProperty() {} }, handlers: {}, addEventListener(name, handler) { this.handlers[name] = handler; }, setAttribute() {}, focus() {} });
   return elements.get(id);
 }
 const store = new Map();
 const context = vm.createContext({
   document: { getElementById: element, documentElement: { style: { setProperty() {} } }, addEventListener() {} },
   localStorage: { getItem: (key) => store.get(key) ?? null, setItem: (key, value) => store.set(key, value) },
-  requestAnimationFrame() {}, ResizeObserver: class { observe() {} }, setInterval() {}, Date,
+  requestAnimationFrame() {}, cancelAnimationFrame() {}, ResizeObserver: class { observe() {} }, setInterval() {}, Date,
 });
 vm.runInContext(fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8'), context);
 const parse = (text) => JSON.parse(JSON.stringify(context.parseImport(text)));
@@ -34,3 +34,22 @@ if (process.argv[2]) {
   assert.ok(!imported.some(s=>s.content.includes('【進行目安')));
 }
 console.log('PASS: text import, paragraph preservation, timing, validation, legacy text, persistence, supplied deck');
+
+const reader = element('memoContainer');
+reader.scrollTop = 0;
+reader.getBoundingClientRect = () => ({left:0,width:390});
+const event = (x,y=200) => ({isPrimary:true,button:0,pointerId:1,clientX:x,clientY:y,target:{closest:()=>null}});
+vm.runInContext('currentSlideIndex=0',context);
+reader.handlers.pointerdown(event(350)); reader.handlers.pointerup(event(350));
+assert.equal(vm.runInContext('currentSlideIndex',context),1);
+reader.handlers.pointerdown(event(30)); reader.handlers.pointerup(event(30));
+assert.equal(vm.runInContext('currentSlideIndex',context),0);
+reader.handlers.pointerdown(event(350)); reader.handlers.pointermove(event(350,250)); reader.handlers.pointerup(event(350));
+assert.equal(vm.runInContext('currentSlideIndex',context),0);
+reader.handlers.pointerdown(event(350)); reader.handlers.pointercancel(); reader.handlers.pointerup(event(350));
+assert.equal(vm.runInContext('currentSlideIndex',context),0);
+reader.handlers.pointerdown(event(350)); reader.scrollTop=30; reader.handlers.pointerup(event(350));
+assert.equal(vm.runInContext('currentSlideIndex',context),0);
+vm.runInContext('displayMode="fit";save();displayMode="readable";load()',context);
+assert.equal(vm.runInContext('displayMode',context),'fit');
+console.log('PASS: left/right taps, drag/cancel/scroll guards, display preference persistence');

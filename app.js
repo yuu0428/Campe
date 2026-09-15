@@ -7,6 +7,8 @@ const importDialog = $("importDialog");
 let slides = [{ content: "" }];
 let currentSlideIndex = 0;
 let fontSize = 28;
+let displayMode = "readable";
+let layoutFrame = null;
 let elapsed = 0;
 let startedAt = null;
 let pointerStart = null;
@@ -33,6 +35,7 @@ function load() {
     }
     const index = Number(localStorage.getItem("currentSlideIndex"));
     currentSlideIndex = Number.isInteger(index) ? Math.max(0, Math.min(index, slides.length - 1)) : 0;
+    displayMode = localStorage.getItem("campeDisplayMode") === "fit" ? "fit" : "readable";
     const size = Number(localStorage.getItem("campeFontSize"));
     if (Number.isFinite(size) && size >= 20 && size <= 48) fontSize = size;
   } catch {
@@ -45,6 +48,7 @@ function save() {
     localStorage.setItem("presentationSlides", JSON.stringify(slides));
     localStorage.setItem("currentSlideIndex", String(currentSlideIndex));
     localStorage.setItem("campeFontSize", String(fontSize));
+    localStorage.setItem("campeDisplayMode", displayMode);
     if (storageFailed) report("");
     storageFailed = false;
   } catch {
@@ -54,7 +58,35 @@ function save() {
 }
 
 function updateScrollHint() {
-  $("scrollHint").hidden = reader.scrollHeight <= reader.clientHeight + reader.scrollTop + 8;
+  $("scrollHint").hidden = displayMode === "fit" || reader.scrollHeight <= reader.clientHeight + reader.scrollTop + 8;
+}
+
+function layoutText() {
+  layoutFrame = null;
+  const content = $("memoContent");
+  content.style.fontSize = `${fontSize}px`;
+  if (displayMode === "fit" && content.textContent.trim()) {
+    const style = getComputedStyle(reader);
+    const height = reader.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+    const width = reader.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    if (height > 0 && width > 0) {
+      let low = 0.1;
+      let high = fontSize;
+      for (let i = 0; i < 16; i++) {
+        const size = (low + high) / 2;
+        content.style.fontSize = `${size}px`;
+        if (content.getBoundingClientRect().height <= height && content.scrollWidth <= content.clientWidth + 1) low = size;
+        else high = size;
+      }
+      content.style.fontSize = `${low}px`;
+    }
+  }
+  updateScrollHint();
+}
+
+function scheduleLayout() {
+  if (layoutFrame !== null) cancelAnimationFrame(layoutFrame);
+  layoutFrame = requestAnimationFrame(layoutText);
 }
 
 function readingSeconds(slide) {
@@ -83,10 +115,12 @@ function render() {
   $("prevBtn").disabled = currentSlideIndex === 0;
   $("nextBtn").disabled = currentSlideIndex === slides.length - 1;
   document.documentElement.style.setProperty("--memo-size", `${fontSize}px`);
-  $("smallerBtn").disabled = fontSize <= 20;
-  $("largerBtn").disabled = fontSize >= 48;
+  $("readableMode").setAttribute("aria-pressed", String(displayMode === "readable"));
+  $("fitMode").setAttribute("aria-pressed", String(displayMode === "fit"));
+  $("smallerBtn").disabled = displayMode === "fit" || fontSize <= 20;
+  $("largerBtn").disabled = displayMode === "fit" || fontSize >= 48;
   reader.scrollTop = 0;
-  requestAnimationFrame(updateScrollHint);
+  scheduleLayout();
 }
 
 function navigate(direction) {
@@ -212,17 +246,33 @@ for (const [id, delta] of [["smallerBtn", -2], ["largerBtn", 2]]) {
   });
 }
 reader.addEventListener("scroll", updateScrollHint, { passive: true });
-new ResizeObserver(updateScrollHint).observe(reader);
+new ResizeObserver(scheduleLayout).observe(reader);
+for (const [id, mode] of [["readableMode", "readable"], ["fitMode", "fit"]]) {
+  $(id).addEventListener("click", () => { displayMode = mode; render(); save(); });
+}
 reader.addEventListener("pointerdown", (event) => {
-  pointerStart = event.isPrimary && event.pointerType === "touch" ? { x: event.clientX, y: event.clientY } : null;
+  if (!event.isPrimary || event.button !== 0 || event.target.closest("button, input, textarea, select, a")) {
+    pointerStart = null;
+    return;
+  }
+  pointerStart = { id: event.pointerId, x: event.clientX, y: event.clientY, scroll: reader.scrollTop, time: Date.now(), moved: false };
+});
+reader.addEventListener("pointermove", (event) => {
+  if (pointerStart && (Math.abs(event.clientX - pointerStart.x) > 10 || Math.abs(event.clientY - pointerStart.y) > 10)) pointerStart.moved = true;
 });
 reader.addEventListener("pointercancel", () => { pointerStart = null; });
 reader.addEventListener("pointerup", (event) => {
-  if (!pointerStart) return;
-  const dx = event.clientX - pointerStart.x;
-  const dy = event.clientY - pointerStart.y;
+  const start = pointerStart;
   pointerStart = null;
+  if (!start || event.pointerId !== start.id || event.target.closest("button, input, textarea, select, a")) return;
+  const dx = event.clientX - start.x;
+  const dy = event.clientY - start.y;
+  if (Math.abs(reader.scrollTop - start.scroll) > 2 || Date.now() - start.time > 600) return;
   if (Math.abs(dx) > 70 && Math.abs(dy) < 35) navigate(dx < 0 ? 1 : -1);
+  else if (!start.moved && Math.abs(dx) <= 10 && Math.abs(dy) <= 10) {
+    const bounds = reader.getBoundingClientRect();
+    navigate(event.clientX < bounds.left + bounds.width / 2 ? -1 : 1);
+  }
 });
 document.addEventListener("keydown", (event) => {
   if (editDialog.open || importDialog.open || event.isComposing || event.altKey || event.ctrlKey || event.metaKey ||
