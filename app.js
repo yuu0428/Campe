@@ -137,7 +137,7 @@ function updateReadingTarget() {
   const lag = Math.trunc((totalMilliseconds - (target - duration) * 1000 - Math.min(pageMilliseconds, duration * 1000)) / 1000);
   const state = !active ? "ready" : lag > 0 ? "late" : "on-time";
   $("pace").setAttribute("data-state", state);
-  $("paceStatus").textContent = !active ? "開始前" : `累計${signedSeconds(lag)}`;
+  $("paceStatus").textContent = !active ? "開始前" : `${lag > 0 ? "遅れ" : lag < 0 ? "余裕" : "差"}${signedSeconds(lag)}`;
   $("pace").setAttribute("title", "累計：＋は遅れ、−は余裕。ページ切替時の予定との差を引き継ぎ、このページの予定を超えた分を加算します。");
   $("pageTiming").textContent = `頁${signedSeconds(-remaining)}`;
   $("pageTiming").setAttribute("data-state", remaining < 0 ? "late" : "on-time");
