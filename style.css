@@ -58,3 +58,13 @@ textarea { display: block; width: 100%; min-height: 100px; height: 42dvh; flex-s
 .display-modes button { flex: 1; font-size: 12px; padding: 8px; }
 .display-modes button[aria-pressed="true"] { background: #e1e7dc; border-color: #315c46; color: #234332; }
 #memoContent { user-select: none; -webkit-user-select: none; }
+
+/* Keep presentation controls compact so the script gets the remaining space. */
+header { padding: 8px 14px; }
+#stopwatchDisplay { font-size: 30px; }
+.timer-actions { gap: 2px; }
+#menuBtn { font-size: 24px; width: 44px; padding: 4px; }
+.reading-target { margin-top: 2px; font-size: 12px; }
+main { padding: 14px 18px 18px; }
+#menuDialog .display-modes { margin-top: 16px; }
+@media (min-width: 800px) { header { padding-left: max(18px, calc((100% - 820px) / 2)); padding-right: max(18px, calc((100% - 820px) / 2)); } }

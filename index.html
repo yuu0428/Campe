@@ -9,24 +9,25 @@
 </head>
 <body>
   <header>
-    <div class="heading"><span class="brand">Campe<span class="dot">.</span></span><span class="page-count"><b id="currentPage">1</b> / <span id="totalPages">1</span></span></div>
     <div class="timer">
-      <div><span class="eyebrow">経過時間</span><output id="stopwatchDisplay" aria-label="経過時間">00:00</output></div>
-      <div class="timer-actions"><button id="startBtn" class="primary">開始</button><button id="resetBtn" class="subtle">リセット</button></div>
+      <div><output id="stopwatchDisplay" aria-label="経過時間">00:00</output></div>
+      <div class="timer-actions"><button id="startBtn" class="primary">開始</button><button id="resetBtn" class="subtle">リセット</button><button id="menuBtn" class="subtle" aria-label="メニューを開く" aria-haspopup="dialog">⋯</button></div>
     </div>
-    <div class="reading-target" aria-label="読み終える目安"><strong id="readingDeadline"></strong><span id="readingDuration"></span></div>
+    <div class="reading-target" aria-label="読み終える目安"><strong id="readingDeadline"></strong></div>
+    <p id="status" role="status" hidden></p>
   </header>
   <main id="memoContainer" tabindex="0" aria-label="発表原稿">
     <div id="memoContent"></div>
-    <div id="emptyState"><span class="eyebrow">READY WHEN YOU ARE</span><h1>話すことを、<br>手のひらに。</h1><p>原稿を入れたら、発表の準備は完了。<br>時間を見ながら、自分のペースで。</p><button id="emptyEditBtn" class="primary">原稿を書く</button><button id="emptyImportBtn" class="subtle">まとめてインポート</button></div>
+    <div id="emptyState"><p>原稿を入れて始めましょう。</p><button id="emptyEditBtn" class="primary">原稿を書く</button><button id="emptyImportBtn" class="subtle">インポート</button></div>
   </main>
-  <footer>
+  <dialog id="menuDialog" aria-labelledby="menuTitle">
+    <div class="dialog-heading"><h2 id="menuTitle">メニュー</h2><button id="closeMenuBtn">閉じる</button></div>
+    <p class="help"><b id="currentPage">1</b> / <span id="totalPages">1</span>ページ · <span id="readingDuration"></span></p>
     <div class="display-modes" role="group" aria-label="原稿の表示方法"><button id="readableMode" aria-pressed="true">読みやすいサイズ</button><button id="fitMode" aria-pressed="false">全文を収める</button></div>
-    <p id="scrollHint" hidden>続きは下にスクロール ↓</p>
+
     <div class="tools"><button id="editBtn">編集</button><button id="importBtn">インポート</button><span class="spacer"></span><button id="smallerBtn" aria-label="文字を小さく">A−</button><button id="largerBtn" aria-label="文字を大きく">A＋</button></div>
     <nav aria-label="ページ送り"><button id="prevBtn">← 前へ</button><span id="pageLabel">1 / 1</span><button id="nextBtn" class="primary">次へ →</button></nav>
-    <p id="status" role="status" hidden></p>
-  </footer>
+  </dialog>
   <dialog id="editDialog">
     <form method="dialog" id="editForm">
       <div class="dialog-heading"><h2 id="editTitle">原稿を編集</h2><button value="close" aria-label="編集を閉じる">閉じる</button></div>

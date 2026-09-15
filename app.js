@@ -4,6 +4,7 @@ const $ = (id) => document.getElementById(id);
 const reader = $("memoContainer");
 const editDialog = $("editDialog");
 const importDialog = $("importDialog");
+const menuDialog = $("menuDialog");
 let slides = [{ content: "" }];
 let currentSlideIndex = 0;
 let fontSize = 28;
@@ -57,10 +58,6 @@ function save() {
   }
 }
 
-function updateScrollHint() {
-  $("scrollHint").hidden = displayMode === "fit" || reader.scrollHeight <= reader.clientHeight + reader.scrollTop + 8;
-}
-
 function layoutText() {
   layoutFrame = null;
   const content = $("memoContent");
@@ -81,7 +78,6 @@ function layoutText() {
       content.style.fontSize = `${low}px`;
     }
   }
-  updateScrollHint();
 }
 
 function scheduleLayout() {
@@ -141,6 +137,7 @@ function prepareEditor() {
 }
 
 function openEditor() {
+  if (menuDialog.open) menuDialog.close();
   prepareEditor();
   editDialog.showModal();
   $("editTextarea").focus();
@@ -210,6 +207,7 @@ function parseImport(text) {
 }
 
 function openImport() {
+  if (menuDialog.open) menuDialog.close();
   $("importError").hidden = true;
   $("importTextarea").value = "";
   importDialog.showModal();
@@ -234,6 +232,8 @@ $("importConfirmBtn").addEventListener("click", () => {
   importDialog.close();
 });
 
+$("menuBtn").addEventListener("click", () => menuDialog.showModal());
+$("closeMenuBtn").addEventListener("click", () => menuDialog.close());
 $("prevBtn").addEventListener("click", () => navigate(-1));
 $("nextBtn").addEventListener("click", () => navigate(1));
 for (const [id, delta] of [["smallerBtn", -2], ["largerBtn", 2]]) {
@@ -245,7 +245,6 @@ for (const [id, delta] of [["smallerBtn", -2], ["largerBtn", 2]]) {
     save();
   });
 }
-reader.addEventListener("scroll", updateScrollHint, { passive: true });
 new ResizeObserver(scheduleLayout).observe(reader);
 for (const [id, mode] of [["readableMode", "readable"], ["fitMode", "fit"]]) {
   $(id).addEventListener("click", () => { displayMode = mode; render(); save(); });
@@ -262,6 +261,7 @@ reader.addEventListener("pointermove", (event) => {
 });
 reader.addEventListener("pointercancel", () => { pointerStart = null; });
 reader.addEventListener("pointerup", (event) => {
+  if (menuDialog.open) { pointerStart = null; return; }
   const start = pointerStart;
   pointerStart = null;
   if (!start || event.pointerId !== start.id || event.target.closest("button, input, textarea, select, a")) return;
@@ -275,7 +275,7 @@ reader.addEventListener("pointerup", (event) => {
   }
 });
 document.addEventListener("keydown", (event) => {
-  if (editDialog.open || importDialog.open || event.isComposing || event.altKey || event.ctrlKey || event.metaKey ||
+  if (menuDialog.open || editDialog.open || importDialog.open || event.isComposing || event.altKey || event.ctrlKey || event.metaKey ||
       event.target.closest("button, textarea, input, select, [contenteditable=true]")) return;
   if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
     event.preventDefault();
