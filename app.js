@@ -123,10 +123,10 @@ function signedSeconds(seconds) {
 function updateReadingTarget() {
   const duration = readingSeconds(slides[currentSlideIndex]);
   const target = slides.slice(0, currentSlideIndex + 1).reduce((sum, slide) => sum + readingSeconds(slide), 0);
-  $("readingDuration").textContent = `${duration}秒${slides[currentSlideIndex].durationSeconds == null ? "≈" : ""}`;
+  $("readingDuration").textContent = `このページの予定：${slides[currentSlideIndex].durationSeconds == null ? "約" : ""}${duration}秒`;
   const deadlineLabel = `開始から${formatTarget(target)}までに読み切る`;
   $("readingDuration").setAttribute("title", `このページを読む時間：${duration}秒`);
-  $("readingDeadline").textContent = `→${Math.floor(target / 60)}:${String(target % 60).padStart(2, "0")}`;
+  $("readingDeadline").textContent = `読み切る目安：開始から${formatTarget(target)}`;
   $("readingDeadline").setAttribute("aria-label", deadlineLabel);
   $("readingDeadline").setAttribute("title", deadlineLabel);
   const totalMilliseconds = elapsedMilliseconds();
@@ -137,9 +137,9 @@ function updateReadingTarget() {
   const lag = Math.trunc((totalMilliseconds - (target - duration) * 1000 - Math.min(pageMilliseconds, duration * 1000)) / 1000);
   const state = !active ? "ready" : lag > 0 ? "late" : "on-time";
   $("pace").setAttribute("data-state", state);
-  $("paceStatus").textContent = !active ? "開始前" : `${lag > 0 ? "遅れ" : lag < 0 ? "余裕" : "差"}${signedSeconds(lag)}`;
+  $("paceStatus").textContent = !active ? "開始前" : lag === 0 ? "予定通り" : `${lag > 0 ? "遅れ" : "余裕"}${signedSeconds(lag)}`;
   $("pace").setAttribute("title", "累計：＋は遅れ、−は余裕。ページ切替時の予定との差を引き継ぎ、このページの予定を超えた分を加算します。");
-  $("pageTiming").textContent = `頁${signedSeconds(-remaining)}`;
+  $("pageTiming").textContent = remaining > 0 ? `あと${remaining}秒` : remaining === 0 ? "切替どき" : `${-remaining}秒超過`;
   $("pageTiming").setAttribute("data-state", remaining < 0 ? "late" : "on-time");
   const pageLabel = `このページ：${duration}秒予定、${pageSeconds}秒経過${remaining < 0 ? `、${-remaining}秒超過` : ""}`;
   $("pageTiming").setAttribute("title", `${pageLabel}。＋は超過、−は残り時間。`);

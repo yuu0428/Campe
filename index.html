@@ -5,13 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f8f7f3">
   <title>Campe — 発表のカンペ</title>
-  <link rel="stylesheet" href="style.css?v=20260915-carry">
+  <link rel="stylesheet" href="style.css?v=20260915-readable">
 </head>
 <body>
   <header>
     <div class="timer">
       <output id="stopwatchDisplay" aria-label="経過時間">00:00</output>
-      <div class="time-details" aria-label="原稿の進行目安"><span id="readingDuration"></span><strong id="readingDeadline"></strong></div>
       <strong id="pageTiming"></strong>
       <span id="pace"><strong id="paceStatus"></strong></span>
       <div class="timer-actions"><button id="startBtn" class="primary" aria-label="開始" title="開始"><svg id="playIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z"/></svg><svg id="pauseIcon" viewBox="0 0 24 24" aria-hidden="true" style="display:none"><path d="M8 5v14M16 5v14"/></svg></button><button id="resetBtn" class="subtle" aria-label="リセット" title="リセット"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></svg></button><button id="menuBtn" class="subtle" aria-label="メニューを開く" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></div>
@@ -28,6 +27,7 @@
     <p class="help"><b id="currentPage">1</b> / <span id="totalPages">1</span>ページ</p>
     <div class="display-modes" role="group" aria-label="原稿の表示方法"><button id="readableMode" aria-pressed="true">読みやすいサイズ</button><button id="fitMode" aria-pressed="false">全文を収める</button></div>
 
+    <div class="time-details" aria-label="原稿の進行目安"><span id="readingDuration"></span><strong id="readingDeadline"></strong></div>
     <div class="tools"><button id="editBtn">編集</button><button id="importBtn">インポート</button><span class="spacer"></span><button id="smallerBtn" aria-label="文字を小さく">A−</button><button id="largerBtn" aria-label="文字を大きく">A＋</button></div>
     <nav aria-label="ページ送り"><button id="prevBtn">← 前へ</button><span id="pageLabel">1 / 1</span><button id="nextBtn" class="primary">次へ →</button></nav>
   </dialog>
@@ -50,6 +50,6 @@
       <div class="dialog-actions"><button value="cancel">キャンセル</button><button type="button" id="importConfirmBtn" class="primary">取り込む</button></div>
     </form>
   </dialog>
-  <script src="app.js?v=20260915-carry"></script>
+  <script src="app.js?v=20260915-readable"></script>
 </body>
 </html>

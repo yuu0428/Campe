@@ -125,3 +125,9 @@ header { position: relative; padding: 4px 6px; }
 #pace { font-size: 16px; line-height: 1.25; padding: 3px; border-radius: 6px; background: #e4eee5; }
 #paceStatus { font-weight: 750; }
 #pageTiming { color: #315c46; }
+
+/* Reserve the single header row for immediately readable live values. */
+.timer { justify-content: space-between; gap: 4px; }
+#pageTiming { font-size: 16px; }
+#menuDialog .time-details { display: grid; gap: 6px; margin: 16px 0; white-space: normal; font-size: 14px; }
+#menuDialog #readingDuration { color: inherit; }
