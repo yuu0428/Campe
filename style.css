@@ -121,3 +121,7 @@ header { position: relative; padding: 4px 6px; }
 #pageTiming { flex: none; white-space: nowrap; font-size: 14px; font-variant-numeric: tabular-nums; }
 #pageTiming[data-state="late"] { color: #a02e20; background: #f8e4df; border-radius: 6px; padding: 3px; }
 #pace[data-state="late"] { font-size: 16px; padding: 3px; }
+
+#pace { font-size: 16px; line-height: 1.25; padding: 3px; border-radius: 6px; background: #e4eee5; }
+#paceStatus { font-weight: 750; }
+#pageTiming { color: #315c46; }

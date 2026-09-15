@@ -116,6 +116,10 @@ function resetTiming() {
   pageTimes.clear();
 }
 
+function signedSeconds(seconds) {
+  return `${seconds > 0 ? "+" : seconds < 0 ? "−" : "±"}${Math.abs(seconds)}秒`;
+}
+
 function updateReadingTarget() {
   const duration = readingSeconds(slides[currentSlideIndex]);
   const target = slides.slice(0, currentSlideIndex + 1).reduce((sum, slide) => sum + readingSeconds(slide), 0);
@@ -130,15 +134,15 @@ function updateReadingTarget() {
   const pageSeconds = Math.floor(pageMilliseconds / 1000);
   const remaining = duration - pageSeconds;
   const active = startedAt !== null || elapsed > 0;
-  const lag = Math.max(0, Math.floor((totalMilliseconds - (target - duration) * 1000 - Math.min(pageMilliseconds, duration * 1000)) / 1000));
+  const lag = Math.trunc((totalMilliseconds - (target - duration) * 1000 - Math.min(pageMilliseconds, duration * 1000)) / 1000);
   const state = !active ? "ready" : lag > 0 ? "late" : "on-time";
   $("pace").setAttribute("data-state", state);
-  $("paceStatus").textContent = !active ? "開始前" : `累計+${lag}秒`;
-  $("pace").setAttribute("title", "累計の遅れ。前のページまでの遅れに、このページの超過を加算。早く次へ進むと取り戻せます。");
-  $("pageTiming").textContent = remaining < 0 ? `頁+${-remaining}秒` : `${pageSeconds}/${duration}秒`;
+  $("paceStatus").textContent = !active ? "開始前" : `累計${signedSeconds(lag)}`;
+  $("pace").setAttribute("title", "累計：＋は遅れ、−は余裕。ページ切替時の予定との差を引き継ぎ、このページの予定を超えた分を加算します。");
+  $("pageTiming").textContent = `頁${signedSeconds(-remaining)}`;
   $("pageTiming").setAttribute("data-state", remaining < 0 ? "late" : "on-time");
   const pageLabel = `このページ：${duration}秒予定、${pageSeconds}秒経過${remaining < 0 ? `、${-remaining}秒超過` : ""}`;
-  $("pageTiming").setAttribute("title", pageLabel);
+  $("pageTiming").setAttribute("title", `${pageLabel}。＋は超過、−は残り時間。`);
   $("pageTiming").setAttribute("aria-label", pageLabel);
   $("paceProgress").value = active && duration > 0 ? Math.min(1, pageSeconds / duration) : 0;
   $("paceProgress").setAttribute("data-state", !active ? "ready" : remaining < 0 ? "late" : remaining <= Math.min(10, duration * 0.2) ? "soon" : "on-time");
