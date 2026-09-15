@@ -302,7 +302,10 @@ function updateTimer() {
   const parts = [minutes, seconds % 60].map((part) => String(part).padStart(2, "0"));
   if (hours > 0) parts.unshift(String(hours).padStart(2, "0"));
   $("stopwatchDisplay").textContent = parts.join(":");
-  $("startBtn").textContent = startedAt === null ? (elapsed > 0 ? "再開" : "開始") : "一時停止";
+  const timerAction = startedAt === null ? (elapsed > 0 ? "再開" : "開始") : "一時停止";
+  $("startBtn").textContent = startedAt === null ? timerAction : "⏸️";
+  $("startBtn").setAttribute("aria-label", timerAction);
+  $("startBtn").setAttribute("title", timerAction);
 }
 $("startBtn").addEventListener("click", () => {
   if (startedAt === null) startedAt = Date.now();
