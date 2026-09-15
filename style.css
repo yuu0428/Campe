@@ -117,3 +117,7 @@ header { position: relative; padding: 4px 6px; }
 #pace { flex: none; white-space: nowrap; font-size: 12px; font-variant-numeric: tabular-nums; }
 #pace[data-state="late"] { padding: 3px 5px; border-radius: 6px; background: #f8e4df; font-size: 18px; line-height: 1.25; }
 #pace[data-state="late"] #paceStatus { color: #a02e20; font-weight: 750; }
+
+#pageTiming { flex: none; white-space: nowrap; font-size: 14px; font-variant-numeric: tabular-nums; }
+#pageTiming[data-state="late"] { color: #a02e20; background: #f8e4df; border-radius: 6px; padding: 3px; }
+#pace[data-state="late"] { font-size: 16px; padding: 3px; }

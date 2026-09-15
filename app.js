@@ -12,6 +12,8 @@ let displayMode = "readable";
 let layoutFrame = null;
 let elapsed = 0;
 let startedAt = null;
+let pageStartedAt = 0;
+const pageTimes = new Map();
 let pointerStart = null;
 let storageFailed = false;
 
@@ -94,8 +96,24 @@ function formatTarget(seconds) {
   return minutes ? `${minutes}分${seconds % 60}秒` : `${seconds}秒`;
 }
 
-function elapsedSeconds() {
-  return Math.max(0, Math.floor((elapsed + (startedAt === null ? 0 : Date.now() - startedAt)) / 1000));
+function elapsedMilliseconds() {
+  return Math.max(0, elapsed + (startedAt === null ? 0 : Date.now() - startedAt));
+}
+
+function elapsedSeconds() { return Math.floor(elapsedMilliseconds() / 1000); }
+
+function leavePage() {
+  const now = elapsedMilliseconds();
+  const slide = slides[currentSlideIndex];
+  pageTimes.set(slide, (pageTimes.get(slide) ?? 0) + now - pageStartedAt);
+  pageStartedAt = now;
+}
+
+function resetTiming() {
+  elapsed = 0;
+  startedAt = null;
+  pageStartedAt = 0;
+  pageTimes.clear();
 }
 
 function updateReadingTarget() {
@@ -107,13 +125,23 @@ function updateReadingTarget() {
   $("readingDeadline").textContent = `→${Math.floor(target / 60)}:${String(target % 60).padStart(2, "0")}`;
   $("readingDeadline").setAttribute("aria-label", deadlineLabel);
   $("readingDeadline").setAttribute("title", deadlineLabel);
-  const remaining = target - elapsedSeconds();
+  const totalMilliseconds = elapsedMilliseconds();
+  const pageMilliseconds = (pageTimes.get(slides[currentSlideIndex]) ?? 0) + totalMilliseconds - pageStartedAt;
+  const pageSeconds = Math.floor(pageMilliseconds / 1000);
+  const remaining = duration - pageSeconds;
   const active = startedAt !== null || elapsed > 0;
-  const state = !active ? "ready" : remaining < 0 ? "late" : remaining <= Math.min(10, duration * 0.2) ? "soon" : "on-time";
+  const lag = Math.max(0, Math.floor((totalMilliseconds - (target - duration) * 1000 - Math.min(pageMilliseconds, duration * 1000)) / 1000));
+  const state = !active ? "ready" : lag > 0 ? "late" : "on-time";
   $("pace").setAttribute("data-state", state);
-  $("paceStatus").textContent = !active ? "開始前" : remaining < 0 ? `${-remaining}秒遅れ` : remaining === 0 ? "切替" : `あと${remaining}秒`;
-  $("paceProgress").value = active && duration > 0 ? Math.max(0, Math.min(1, (duration - remaining) / duration)) : 0;
-  $("paceProgress").setAttribute("data-state", state);
+  $("paceStatus").textContent = !active ? "開始前" : `累計+${lag}秒`;
+  $("pace").setAttribute("title", "累計の遅れ。前のページまでの遅れに、このページの超過を加算。早く次へ進むと取り戻せます。");
+  $("pageTiming").textContent = remaining < 0 ? `頁+${-remaining}秒` : `${pageSeconds}/${duration}秒`;
+  $("pageTiming").setAttribute("data-state", remaining < 0 ? "late" : "on-time");
+  const pageLabel = `このページ：${duration}秒予定、${pageSeconds}秒経過${remaining < 0 ? `、${-remaining}秒超過` : ""}`;
+  $("pageTiming").setAttribute("title", pageLabel);
+  $("pageTiming").setAttribute("aria-label", pageLabel);
+  $("paceProgress").value = active && duration > 0 ? Math.min(1, pageSeconds / duration) : 0;
+  $("paceProgress").setAttribute("data-state", !active ? "ready" : remaining < 0 ? "late" : remaining <= Math.min(10, duration * 0.2) ? "soon" : "on-time");
 }
 
 function render() {
@@ -138,6 +166,7 @@ function navigate(direction) {
   if (editDialog.open || importDialog.open) return;
   const next = currentSlideIndex + direction;
   if (next < 0 || next >= slides.length) return;
+  leavePage();
   currentSlideIndex = next;
   render();
   save();
@@ -179,6 +208,7 @@ $("durationInput").addEventListener("input", () => {
 });
 editDialog.addEventListener("close", render);
 $("addSlideBtn").addEventListener("click", () => {
+  leavePage();
   slides.splice(currentSlideIndex + 1, 0, { content: "" });
   currentSlideIndex++;
   save();
@@ -188,6 +218,7 @@ $("addSlideBtn").addEventListener("click", () => {
 $("deleteSlideBtn").addEventListener("click", () => {
   if (slides.length <= 1) return;
   if (slides[currentSlideIndex].content && !confirm("このページの原稿を削除しますか？")) return;
+  leavePage();
   slides.splice(currentSlideIndex, 1);
   currentSlideIndex = Math.min(currentSlideIndex, slides.length - 1);
   save();
@@ -240,6 +271,7 @@ $("importConfirmBtn").addEventListener("click", () => {
     return;
   }
   if (slides.some(({ content }) => content.trim()) && !confirm("現在の全ページを、入力した原稿に置き換えますか？")) return;
+  resetTiming();
   slides = imported;
   currentSlideIndex = 0;
   save();
@@ -319,8 +351,7 @@ $("startBtn").addEventListener("click", () => {
 });
 $("resetBtn").addEventListener("click", () => {
   if ((startedAt !== null || elapsed > 0) && !confirm("経過時間をリセットしますか？")) return;
-  elapsed = 0;
-  startedAt = null;
+  resetTiming();
   updateTimer();
 });
 setInterval(updateTimer, 250);
