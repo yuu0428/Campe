@@ -1,427 +1,260 @@
-// アプリケーションの状態管理
+"use strict";
+
+const $ = (id) => document.getElementById(id);
+const reader = $("memoContainer");
+const editDialog = $("editDialog");
+const importDialog = $("importDialog");
 let slides = [{ content: "" }];
 let currentSlideIndex = 0;
-let stopwatchInterval = null;
-let stopwatchTime = 0; // 秒単位
-let isRunning = false;
-let touchStartX = 0;
-let touchEndX = 0;
-let touchStartY = 0;
+let fontSize = 28;
+let elapsed = 0;
+let startedAt = null;
+let pointerStart = null;
+let storageFailed = false;
 
-// DOM要素の取得
-const memoContent = document.getElementById("memoContent");
-const currentPageEl = document.getElementById("currentPage");
-const totalPagesEl = document.getElementById("totalPages");
-const stopwatchDisplay = document.getElementById("stopwatchDisplay");
-const startBtn = document.getElementById("startBtn");
-const stopBtn = document.getElementById("stopBtn");
-const resetBtn = document.getElementById("resetBtn");
-const addSlideBtn = document.getElementById("addSlideBtn");
-const deleteSlideBtn = document.getElementById("deleteSlideBtn");
-const memoContainer = document.getElementById("memoContainer");
-const editBtn = document.getElementById("editBtn");
-const importBtn = document.getElementById("importBtn");
-const importModal = document.getElementById("importModal");
-const importTextarea = document.getElementById("importTextarea");
-const importConfirmBtn = document.getElementById("importConfirmBtn");
-const importCancelBtn = document.getElementById("importCancelBtn");
-
-// 初期化
-function init() {
-  loadFromStorage();
-  updateDisplay();
-  updatePageCounter();
-  updateDeleteButton();
-  attachEventListeners();
+function report(message) {
+  $("status").textContent = message;
+  $("status").hidden = !message;
 }
 
-// localStorageからデータを読み込み
-function loadFromStorage() {
-  const savedSlides = localStorage.getItem("presentationSlides");
-  if (savedSlides) {
-    slides = JSON.parse(savedSlides);
-  }
-
-  const savedIndex = localStorage.getItem("currentSlideIndex");
-  if (savedIndex !== null) {
-    currentSlideIndex = parseInt(savedIndex, 10);
+function load() {
+  try {
+    const saved = localStorage.getItem("presentationSlides");
+    if (saved !== null) {
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed) || parsed.length === 0 ||
+          !parsed.every((slide) => slide && typeof slide.content === "string")) {
+        throw new Error("Invalid saved slides");
+      }
+      slides = parsed.map(({ content, durationSeconds }) => ({
+        content,
+        durationSeconds: Number.isInteger(durationSeconds) && durationSeconds >= 1 && durationSeconds <= 86400 ? durationSeconds : null,
+      }));
+    }
+    const index = Number(localStorage.getItem("currentSlideIndex"));
+    currentSlideIndex = Number.isInteger(index) ? Math.max(0, Math.min(index, slides.length - 1)) : 0;
+    const size = Number(localStorage.getItem("campeFontSize"));
+    if (Number.isFinite(size) && size >= 20 && size <= 48) fontSize = size;
+  } catch {
+    report("保存済みの原稿を読み込めませんでした。元の保存データはまだ変更していません。");
   }
 }
 
-// localStorageにデータを保存
-function saveToStorage() {
-  localStorage.setItem("presentationSlides", JSON.stringify(slides));
-  localStorage.setItem("currentSlideIndex", currentSlideIndex.toString());
+function save() {
+  try {
+    localStorage.setItem("presentationSlides", JSON.stringify(slides));
+    localStorage.setItem("currentSlideIndex", String(currentSlideIndex));
+    localStorage.setItem("campeFontSize", String(fontSize));
+    if (storageFailed) report("");
+    storageFailed = false;
+  } catch {
+    storageFailed = true;
+    report("端末に保存できません。画面を閉じる前に原稿をコピーしてください。");
+  }
 }
 
-// 表示を更新
-function updateDisplay() {
-  memoContent.textContent = slides[currentSlideIndex].content;
-  adjustFontSize();
+function updateScrollHint() {
+  $("scrollHint").hidden = reader.scrollHeight <= reader.clientHeight + reader.scrollTop + 8;
 }
 
-// 収まるまでフォントサイズを自動調整
-function adjustFontSize() {
-  const content = memoContent.textContent.trim();
-  if (!content) {
-    memoContent.style.fontSize = "2rem";
+function readingSeconds(slide) {
+  return slide.durationSeconds ?? Math.ceil(Array.from(slide.content.replace(/\s/g, "")).length / 5);
+}
+
+function formatTarget(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  return minutes ? `${minutes}分${seconds % 60}秒` : `${seconds}秒`;
+}
+
+function updateReadingTarget() {
+  const duration = readingSeconds(slides[currentSlideIndex]);
+  const target = slides.slice(0, currentSlideIndex + 1).reduce((sum, slide) => sum + readingSeconds(slide), 0);
+  $("readingDuration").textContent = `このページ：${duration}秒${slides[currentSlideIndex].durationSeconds == null ? "（目安）" : ""}`;
+  $("readingDeadline").textContent = `開始から${formatTarget(target)}までに読み切る`;
+}
+
+function render() {
+  updateReadingTarget();
+  $("memoContent").textContent = slides[currentSlideIndex].content;
+  $("emptyState").hidden = slides[currentSlideIndex].content.length > 0;
+  $("currentPage").textContent = String(currentSlideIndex + 1);
+  $("totalPages").textContent = String(slides.length);
+  $("pageLabel").textContent = `${currentSlideIndex + 1} / ${slides.length}`;
+  $("prevBtn").disabled = currentSlideIndex === 0;
+  $("nextBtn").disabled = currentSlideIndex === slides.length - 1;
+  document.documentElement.style.setProperty("--memo-size", `${fontSize}px`);
+  $("smallerBtn").disabled = fontSize <= 20;
+  $("largerBtn").disabled = fontSize >= 48;
+  reader.scrollTop = 0;
+  requestAnimationFrame(updateScrollHint);
+}
+
+function navigate(direction) {
+  if (editDialog.open || importDialog.open) return;
+  const next = currentSlideIndex + direction;
+  if (next < 0 || next >= slides.length) return;
+  currentSlideIndex = next;
+  render();
+  save();
+}
+
+function prepareEditor() {
+  $("editTitle").textContent = `${currentSlideIndex + 1}ページ目を編集`;
+  $("editTextarea").value = slides[currentSlideIndex].content;
+  $("durationInput").value = slides[currentSlideIndex].durationSeconds ?? "";
+  $("durationInput").setCustomValidity("");
+  $("deleteSlideBtn").disabled = slides.length <= 1;
+}
+
+function openEditor() {
+  prepareEditor();
+  editDialog.showModal();
+  $("editTextarea").focus();
+}
+
+$("editBtn").addEventListener("click", openEditor);
+$("emptyEditBtn").addEventListener("click", openEditor);
+$("editTextarea").addEventListener("input", () => {
+  slides[currentSlideIndex].content = $("editTextarea").value;
+  save();
+});
+$("durationInput").addEventListener("input", () => {
+  const input = $("durationInput");
+  input.setCustomValidity("");
+  if (input.validity.badInput) return;
+  const value = input.value === "" ? null : Number(input.value);
+  if (value !== null && (!Number.isInteger(value) || value < 1 || value > 86400)) {
+    input.setCustomValidity("1〜86400の整数を入力してください。");
     return;
   }
-
-  const rootFontSize = parseFloat(
-    getComputedStyle(document.documentElement).fontSize
-  );
-  let fontSizePx = rootFontSize * 2;
-
-  memoContent.style.fontSize = `${fontSizePx}px`;
-
-  let guard = 0;
-  while (
-    (memoContent.scrollHeight > memoContent.clientHeight ||
-      memoContent.scrollWidth > memoContent.clientWidth) &&
-    guard < 500
-  ) {
-    fontSizePx *= 0.96;
-    memoContent.style.fontSize = `${fontSizePx}px`;
-    guard++;
-  }
-}
-
-// ページカウンターを更新
-function updatePageCounter() {
-  currentPageEl.textContent = currentSlideIndex + 1;
-  totalPagesEl.textContent = slides.length;
-}
-
-// 削除ボタンの表示/非表示を更新
-function updateDeleteButton() {
-  if (slides.length > 1) {
-    deleteSlideBtn.classList.add("visible");
-  } else {
-    deleteSlideBtn.classList.remove("visible");
-  }
-}
-
-// 現在のスライドの内容を保存
-function saveCurrentSlide() {
-  slides[currentSlideIndex].content = memoContent.textContent;
-  saveToStorage();
-}
-
-// スライドを追加
-function addSlide() {
-  saveCurrentSlide();
-  slides.push({ content: "" });
-  currentSlideIndex = slides.length - 1;
-  updateDisplay();
-  updatePageCounter();
-  updateDeleteButton();
-  saveToStorage();
-  memoContent.focus();
-}
-
-// スライドを削除
-function deleteSlide() {
+  slides[currentSlideIndex].durationSeconds = value;
+  updateReadingTarget();
+  save();
+});
+editDialog.addEventListener("close", render);
+$("addSlideBtn").addEventListener("click", () => {
+  slides.splice(currentSlideIndex + 1, 0, { content: "" });
+  currentSlideIndex++;
+  save();
+  prepareEditor();
+  $("editTextarea").focus();
+});
+$("deleteSlideBtn").addEventListener("click", () => {
   if (slides.length <= 1) return;
-
+  if (slides[currentSlideIndex].content && !confirm("このページの原稿を削除しますか？")) return;
   slides.splice(currentSlideIndex, 1);
+  currentSlideIndex = Math.min(currentSlideIndex, slides.length - 1);
+  save();
+  prepareEditor();
+});
 
-  if (currentSlideIndex >= slides.length) {
-    currentSlideIndex = slides.length - 1;
+function parseImport(text) {
+  const normalized = text.replace(/\r\n?/g, "\n").trim();
+  if (!normalized.startsWith("【Campe原稿")) {
+    return normalized.split(/\n[\t \u3000]*\n(?:[\t \u3000]*\n)*/).map((content) => ({ content: content.trim() })).filter(({ content }) => content);
   }
-
-  updateDisplay();
-  updatePageCounter();
-  updateDeleteButton();
-  saveToStorage();
-}
-
-// 次のスライドへ
-function nextSlide() {
-  saveCurrentSlide();
-  if (currentSlideIndex < slides.length - 1) {
-    currentSlideIndex++;
-    // 編集モードを解除
-    if (isEditMode) {
-      toggleEditMode();
+  const lines = normalized.split("\n");
+  if (lines.shift() !== "【Campe原稿 v1】") throw new Error("対応していないCampe原稿の形式です。");
+  const result = [];
+  let current = null;
+  for (const line of lines) {
+    const match = /^【スライド ([1-9]\d*)｜([1-9]\d*)秒】$/.exec(line);
+    if (match) {
+      if (Number(match[1]) !== result.length + 1 || Number(match[2]) > 86400) throw new Error("スライド番号または秒数が不正です。");
+      current = { content: "", durationSeconds: Number(match[2]) };
+      result.push(current);
+    } else if (/^【スライド/.test(line)) {
+      throw new Error("スライドの区切り行を確認してください。");
+    } else if (current) {
+      current.content += line + "\n";
+    } else if (line.trim()) {
+      throw new Error("最初のスライドの区切りがありません。");
     }
-    updateDisplay();
-    updatePageCounter();
   }
+  if (!result.length || result.some((slide) => !slide.content.trim())) throw new Error("原稿が空のスライドがあります。");
+  return result.map((slide) => ({ ...slide, content: slide.content.replace(/^\n+|\n+$/g, "") }));
 }
 
-// 前のスライドへ
-function prevSlide() {
-  saveCurrentSlide();
-  if (currentSlideIndex > 0) {
-    currentSlideIndex--;
-    // 編集モードを解除
-    if (isEditMode) {
-      toggleEditMode();
-    }
-    updateDisplay();
-    updatePageCounter();
-  }
+function openImport() {
+  $("importError").hidden = true;
+  $("importTextarea").value = "";
+  importDialog.showModal();
+  $("importTextarea").focus();
 }
-
-// ストップウォッチの時間をフォーマット
-function formatTime(totalSeconds) {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
-    2,
-    "0"
-  )}:${String(seconds).padStart(2, "0")}`;
-}
-
-// ストップウォッチを更新
-function updateStopwatch() {
-  stopwatchDisplay.textContent = formatTime(stopwatchTime);
-}
-
-// ストップウォッチをスタート
-function startStopwatch() {
-  if (!isRunning) {
-    isRunning = true;
-    stopwatchInterval = setInterval(() => {
-      stopwatchTime++;
-      updateStopwatch();
-    }, 1000);
-  }
-}
-
-// ストップウォッチを停止
-function stopStopwatch() {
-  if (isRunning) {
-    isRunning = false;
-    clearInterval(stopwatchInterval);
-  }
-}
-
-// ストップウォッチをリセット
-function resetStopwatch() {
-  stopStopwatch();
-  stopwatchTime = 0;
-  updateStopwatch();
-}
-
-// 編集モードの切り替え
-let isEditMode = false;
-
-function toggleEditMode() {
-  isEditMode = !isEditMode;
-  
-  if (isEditMode) {
-    memoContent.contentEditable = "true";
-    memoContent.classList.add("editable");
-    editBtn.classList.add("active");
-    memoContent.focus();
-  } else {
-    memoContent.contentEditable = "false";
-    memoContent.classList.remove("editable");
-    editBtn.classList.remove("active");
-    saveCurrentSlide();
-  }
-}
-
-// インポートモーダルを開く
-function openImportModal() {
-  importModal.classList.add("show");
-  importTextarea.value = "";
-  importTextarea.focus();
-}
-
-// インポートモーダルを閉じる
-function closeImportModal() {
-  importModal.classList.remove("show");
-  importTextarea.value = "";
-}
-
-// メモをインポート
-function importMemos() {
-  const text = importTextarea.value.trim();
-  
-  if (!text) {
-    closeImportModal();
+$("importBtn").addEventListener("click", openImport);
+$("emptyImportBtn").addEventListener("click", openImport);
+$("importConfirmBtn").addEventListener("click", () => {
+  const text = $("importTextarea").value.replace(/\r\n?/g, "\n").trim();
+  if (!text) { $("importTextarea").focus(); return; }
+  let imported;
+  try { imported = parseImport(text); } catch (error) {
+    $("importError").textContent = error.message;
+    $("importError").hidden = false;
     return;
   }
-  
-  // 空行（改行2つ以上）で分割
-  const newSlides = text
-    .split(/\n\s*\n/)
-    .map(content => content.trim())
-    .filter(content => content.length > 0)
-    .map(content => ({ content }));
-  
-  if (newSlides.length === 0) {
-    closeImportModal();
-    return;
-  }
-  
-  // 現在のスライドを保存してから置き換え
-  slides = newSlides;
+  if (slides.some(({ content }) => content.trim()) && !confirm("現在の全ページを、入力した原稿に置き換えますか？")) return;
+  slides = imported;
   currentSlideIndex = 0;
-  
-  updateDisplay();
-  updatePageCounter();
-  updateDeleteButton();
-  saveToStorage();
-  
-  closeImportModal();
+  save();
+  render();
+  importDialog.close();
+});
+
+$("prevBtn").addEventListener("click", () => navigate(-1));
+$("nextBtn").addEventListener("click", () => navigate(1));
+for (const [id, delta] of [["smallerBtn", -2], ["largerBtn", 2]]) {
+  $(id).addEventListener("click", () => {
+    fontSize = Math.max(20, Math.min(48, fontSize + delta));
+    const scrollTop = reader.scrollTop;
+    render();
+    reader.scrollTop = scrollTop;
+    save();
+  });
 }
-
-
-// イベントリスナーを設定
-function attachEventListeners() {
-  // メモの内容が変更されたら保存 & フォントサイズ調整
-  memoContent.addEventListener("input", () => {
-    saveCurrentSlide();
-    adjustFontSize();
-  });
-
-  // ストップウォッチコントロール
-  startBtn.addEventListener("click", startStopwatch);
-  stopBtn.addEventListener("click", stopStopwatch);
-  resetBtn.addEventListener("click", resetStopwatch);
-
-  // スライド追加
-  addSlideBtn.addEventListener("click", addSlide);
-
-  // スライド削除
-  deleteSlideBtn.addEventListener("click", deleteSlide);
-
-  // 編集モード切り替え
-  editBtn.addEventListener("click", toggleEditMode);
-
-  // インポートモーダル
-  importBtn.addEventListener("click", openImportModal);
-  importConfirmBtn.addEventListener("click", importMemos);
-  importCancelBtn.addEventListener("click", closeImportModal);
-  
-  // モーダル外クリックで閉じる
-  importModal.addEventListener("click", (e) => {
-    if (e.target === importModal) {
-      closeImportModal();
-    }
-  });
-
-  // タップで次のスライドへ（メモエリア以外）
-  document.body.addEventListener("click", (e) => {
-    const isInMemoArea = memoContainer.contains(e.target);
-    const isStopwatch = e.target.closest(".stopwatch-container");
-    const isPageCounter = e.target.closest(".page-counter");
-    const isAddBtn = e.target.closest(".add-slide-btn");
-    const isDeleteBtn = e.target.closest(".delete-slide-btn");
-    
-    if (!isInMemoArea && !isStopwatch && !isPageCounter && !isAddBtn && !isDeleteBtn) {
-      nextSlide();
-    }
-  });
-
-  // スワイプジェスチャー（タッチデバイス）
-  document.addEventListener(
-    "touchstart",
-    (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-      touchStartY = e.changedTouches[0].screenY;
-    },
-    { passive: true }
-  );
-
-  document.addEventListener(
-    "touchend",
-    (e) => {
-      touchEndX = e.changedTouches[0].screenX;
-      handleSwipe();
-    },
-    { passive: true }
-  );
-
-  // マウスホイール/トラックパッドでのスクロール
-  let scrollTimeout;
-  document.addEventListener(
-    "wheel",
-    (e) => {
-      // メモエリア内でのスクロールは除外
-      if (memoContainer.contains(e.target)) return;
-
-      e.preventDefault();
-
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        if (e.deltaX > 30) {
-          nextSlide();
-        } else if (e.deltaX < -30) {
-          prevSlide();
-        }
-      }, 50);
-    },
-    { passive: false }
-  );
-
-  // キーボードショートカット
-  document.addEventListener("keydown", (e) => {
-    // メモ編集中は除外
-    if (document.activeElement === memoContent) return;
-
-    if (e.key === "ArrowRight" || e.key === " ") {
-      e.preventDefault();
-      nextSlide();
-    } else if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      prevSlide();
-    }
-  });
-
-  // ビューポート変更時に再計算
-  window.addEventListener("resize", adjustFontSize);
-}
-
-// スワイプ処理
-function handleSwipe() {
-  const swipeThreshold = 50;
-  const diff = touchStartX - touchEndX;
-
-  if (Math.abs(diff) > swipeThreshold) {
-    // スワイプ判定
-    console.log('🔄 Swipe detected, diff:', diff);
-    if (diff > 0) {
-      // 左スワイプ → 次へ
-      console.log('⬅️ Left swipe - Next slide');
-      nextSlide();
-    } else {
-      // 右スワイプ → 前へ
-      console.log('➡️ Right swipe - Previous slide');
-      prevSlide();
-    }
-  } else {
-    // タップ判定（スワイプではない）
-    const target = document.elementFromPoint(touchEndX, touchStartY);
-    console.log('👆 Tap detected at X:', touchEndX, 'Y:', touchStartY);
-    console.log('   Target element:', target);
-    
-    if (!target) {
-      console.log('   ❌ No target found');
-      return;
-    }
-    
-    const isButton = target.closest('button') || target.tagName === 'BUTTON';
-    const isModal = importModal.contains(target);
-    
-    console.log('   Is button?', isButton);
-    console.log('   Is modal?', isModal);
-    
-    // ボタンやモーダル以外をタップした場合は次のページへ
-    if (!isButton && !isModal) {
-      console.log('   ✅ Moving to next slide');
-      nextSlide();
-    } else {
-      console.log('   ⛔ Button or modal - no navigation');
-    }
+reader.addEventListener("scroll", updateScrollHint, { passive: true });
+new ResizeObserver(updateScrollHint).observe(reader);
+reader.addEventListener("pointerdown", (event) => {
+  pointerStart = event.isPrimary && event.pointerType === "touch" ? { x: event.clientX, y: event.clientY } : null;
+});
+reader.addEventListener("pointercancel", () => { pointerStart = null; });
+reader.addEventListener("pointerup", (event) => {
+  if (!pointerStart) return;
+  const dx = event.clientX - pointerStart.x;
+  const dy = event.clientY - pointerStart.y;
+  pointerStart = null;
+  if (Math.abs(dx) > 70 && Math.abs(dy) < 35) navigate(dx < 0 ? 1 : -1);
+});
+document.addEventListener("keydown", (event) => {
+  if (editDialog.open || importDialog.open || event.isComposing || event.altKey || event.ctrlKey || event.metaKey ||
+      event.target.closest("button, textarea, input, select, [contenteditable=true]")) return;
+  if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+    event.preventDefault();
+    navigate(event.key === "ArrowRight" ? 1 : -1);
   }
-}
+});
 
-// アプリケーション初期化
-init();
+function updateTimer() {
+  const seconds = Math.floor((elapsed + (startedAt === null ? 0 : Date.now() - startedAt)) / 1000);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor(seconds / 60) % 60;
+  const parts = [minutes, seconds % 60].map((part) => String(part).padStart(2, "0"));
+  if (hours > 0) parts.unshift(String(hours).padStart(2, "0"));
+  $("stopwatchDisplay").textContent = parts.join(":");
+  $("startBtn").textContent = startedAt === null ? (elapsed > 0 ? "再開" : "開始") : "一時停止";
+}
+$("startBtn").addEventListener("click", () => {
+  if (startedAt === null) startedAt = Date.now();
+  else { elapsed += Date.now() - startedAt; startedAt = null; }
+  updateTimer();
+});
+$("resetBtn").addEventListener("click", () => {
+  if ((startedAt !== null || elapsed > 0) && !confirm("経過時間をリセットしますか？")) return;
+  elapsed = 0;
+  startedAt = null;
+  updateTimer();
+});
+setInterval(updateTimer, 250);
+document.addEventListener("visibilitychange", updateTimer);
+load();
+render();
+updateTimer();

@@ -1,380 +1,55 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+:root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif; color: #252923; background: #f8f7f3; --accent: #315c46; --memo-size: 28px; }
+* { box-sizing: border-box; }
+body { margin: 0; height: 100vh; height: 100dvh; display: flex; flex-direction: column; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+button, textarea { font: inherit; }
+button { min-height: 44px; border: 1px solid #d9dcd3; background: transparent; color: inherit; border-radius: 12px; padding: 10px 15px; cursor: pointer; touch-action: manipulation; font-size: 14px; font-weight: 600; }
+button:disabled { opacity: .35; cursor: default; }
+button:not(:disabled):active { background: #e1e7dc; }
+button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+button.primary:not(:disabled):active { background: #234332; }
+button.subtle { border-color: transparent; }
+:focus-visible { outline: 3px solid #98b78a; outline-offset: 3px; }
+[hidden] { display: none !important; }
+header, footer { flex-shrink: 0; padding: 14px 22px; }
+header { border-bottom: 1px solid #dfe1d7; }
+.heading, .timer, .timer-actions, .tools, nav, .dialog-heading, .dialog-actions { display: flex; align-items: center; gap: 10px; }
+.heading { justify-content: space-between; margin-bottom: 14px; }
+.brand { font-size: 22px; font-weight: 750; letter-spacing: -1px; }
+.dot { color: var(--accent); }
+.page-count { font-size: 13px; color: #656c61; font-variant-numeric: tabular-nums; }
+.timer { justify-content: space-between; }
+.eyebrow { display: block; color: #66715f; font-size: 10px; font-weight: 600; letter-spacing: .12em; margin-bottom: 3px; }
+#stopwatchDisplay { display: block; font-size: 38px; font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1.15; letter-spacing: -1px; }
+main { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y pinch-zoom; padding: 26px 24px 40px; scrollbar-width: thin; }
+#memoContent { max-width: 820px; margin: 0 auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--memo-size); line-height: 1.8; font-weight: 550; }
+#emptyState { max-width: 600px; margin: 6vh auto 0; }
+h1 { font-size: clamp(28px, 7vw, 44px); font-weight: 650; line-height: 1.5; letter-spacing: -.04em; margin: 18px 0; }
+#emptyState p { font-size: 14px; color: #687061; line-height: 1.9; margin-bottom: 25px; }
+#emptyState button { display: block; margin: 8px 0; }
+footer { border-top: 1px solid #dfe1d7; background: #f8f7f3; }
+.tools { margin-bottom: 12px; }
+.tools button { padding: 8px 12px; }
+.spacer { flex: 1; }
+nav { justify-content: space-between; }
+nav button { width: 34%; min-height: 52px; }
+#pageLabel { font-size: 13px; color: #66715f; font-variant-numeric: tabular-nums; }
+#scrollHint { margin: 0 0 8px; text-align: center; font-size: 11px; color: #66715f; }
+#status { font-size: 12px; color: #8a382b; margin: 8px 0 0; }
+dialog { width: min(620px, calc(100% - 24px)); max-height: calc(100dvh - 32px); border: 1px solid #dfe1d7; border-radius: 20px; background: #f8f7f3; color: inherit; padding: 22px; }
+dialog::backdrop { background: #19241cc0; }
+dialog form { display: flex; flex-direction: column; max-height: calc(100dvh - 80px); }
+.dialog-heading { justify-content: space-between; }
+h2 { font-size: 20px; margin: 0; }
+.help { color: #66715f; font-size: 13px; line-height: 1.7; }
+textarea { display: block; width: 100%; min-height: 100px; height: 42dvh; flex-shrink: 1; padding: 15px; font-size: 18px; line-height: 1.7; border: 1px solid #c5ccbd; border-radius: 12px; resize: none; color: inherit; background: white; }
+.dialog-actions { justify-content: flex-end; flex-wrap: wrap; margin-top: 16px; }
+.danger { color: #9b3d32; margin-right: auto; }
+@media (min-width: 800px) { header, footer { padding-left: max(24px, calc((100% - 820px) / 2)); padding-right: max(24px, calc((100% - 820px) / 2)); } }
+@media (max-width: 350px) { header, footer { padding: 10px 12px; } main { padding: 20px 16px; } .tools { gap: 5px; } .tools button { padding: 8px 9px; } .timer-actions { gap: 2px; } #stopwatchDisplay { font-size: 32px; } }
+@media (max-height: 500px) { header { padding-top: 6px; padding-bottom: 6px; } .heading { display: none; } .timer .eyebrow { display: none; } #stopwatchDisplay { font-size: 28px; } footer { padding-top: 6px; padding-bottom: 6px; } .tools { margin-bottom: 4px; } nav button { min-height: 44px; } main { padding-top: 14px; } }
 
-body {
-  font-family: "Noto Sans JP", sans-serif;
-  background-color: #ffffff;
-  color: #000000;
-  overflow: hidden;
-  width: 100vw;
-  height: 100vh;
-  position: relative;
-  user-select: none;
-  touch-action: pan-x;
-}
-
-/* ページカウンター（左上） */
-.page-counter {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  font-size: 1rem;
-  font-weight: 500;
-  z-index: 50;
-}
-
-/* ストップウォッチ（上部中央） */
-.stopwatch-container {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  z-index: 100;
-}
-
-.stopwatch-display {
-  font-size: 1rem;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-}
-
-.control-btn {
-  background-color: #000000;
-  color: #ffffff;
-  border: none;
-  padding: 6px 12px;
-  font-size: 0.75rem;
-  font-family: "Noto Sans JP", sans-serif;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.control-btn:hover {
-  background-color: #333333;
-  transform: translateY(-1px);
-}
-
-.control-btn:active {
-  transform: translateY(0);
-}
-
-/* メモコンテナ（中央） */
-.memo-container {
-  position: fixed;
-  top: 10vh;
-  left: 10vh;
-  right: 10vh;
-  bottom: 10vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-}
-
-.memo-content {
-  font-size: 2rem;
-  font-weight: 900;
-  line-height: 1.6;
-  text-align: center;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  padding: 20px;
-  outline: none;
-  cursor: default;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
-}
-
-.memo-content.editable {
-  cursor: text;
-  user-select: text;
-}
-
-.memo-content:empty:before {
-  content: attr(data-placeholder);
-  color: #999999;
-}
-
-.memo-content:focus:before {
-  content: "";
-}
-
-/* スクロールバーのスタイリング */
-.memo-content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.memo-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-.memo-content::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
-}
-
-.memo-content::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-/* プラスボタン（右下） */
-.add-slide-btn {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background-color: #000000;
-  color: #ffffff;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.add-slide-btn:hover {
-  background-color: #333333;
-  transform: scale(1.1);
-}
-
-.add-slide-btn:active {
-  transform: scale(0.95);
-}
-
-/* 削除ボタン（右下、プラスボタンの左） */
-.delete-slide-btn {
-  position: fixed;
-  bottom: 30px;
-  right: 100px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background-color: #ffffff;
-  color: #000000;
-  border: 2px solid #000000;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  z-index: 100;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.delete-slide-btn.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.delete-slide-btn:hover {
-  background-color: #000000;
-  color: #ffffff;
-  transform: scale(1.1);
-}
-
-.delete-slide-btn:active {
-  transform: scale(0.95);
-}
-
-/* 左下のボタン群 */
-.bottom-left-controls {
-  position: fixed;
-  bottom: 30px;
-  left: 30px;
-  display: flex;
-  gap: 10px;
-  z-index: 150;
-}
-
-.control-button {
-  padding: 8px 16px;
-  background-color: #000000;
-  color: #ffffff;
-  border: none;
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 0.9rem;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.control-button:hover {
-  background-color: #333333;
-  transform: translateY(-1px);
-}
-
-.control-button:active {
-  transform: translateY(0);
-}
-
-.control-button.active {
-  background-color: #4CAF50;
-}
-
-.control-button.active:hover {
-  background-color: #45a049;
-}
-
-/* モーダル */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal.show {
-    display: flex;
-}
-
-.modal-content {
-    background-color: #ffffff;
-    padding: 30px;
-    border-radius: 8px;
-    max-width: 600px;
-    width: 90%;
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
-}
-
-#importTextarea {
-    width: 100%;
-    min-height: 300px;
-    padding: 15px;
-    font-family: 'Noto Sans JP', sans-serif;
-    font-size: 1rem;
-    border: 2px solid #000000;
-    border-radius: 4px;
-    resize: vertical;
-    margin-bottom: 20px;
-    outline: none;
-    white-space: pre-wrap;
-}
-
-#importTextarea:focus {
-    border-color: #333333;
-}
-
-.modal-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-}
-
-.modal-btn {
-    padding: 10px 20px;
-    font-family: 'Noto Sans JP', sans-serif;
-    font-size: 0.9rem;
-    border: 2px solid #000000;
-    background-color: #ffffff;
-    color: #000000;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.modal-btn:hover {
-    background-color: #f0f0f0;
-}
-
-.modal-btn.primary {
-    background-color: #000000;
-    color: #ffffff;
-}
-
-.modal-btn.primary:hover {
-    background-color: #333333;
-}
-
-/* レスポンシブ対応 */
-@media (max-width: 768px) {
-  .memo-container {
-    top: 8vh;
-    left: 5vh;
-    right: 5vh;
-    bottom: 8vh;
-  }
-
-  .stopwatch-container {
-    gap: 8px;
-  }
-
-  .stopwatch-display {
-    font-size: 0.9rem;
-  }
-
-  .control-btn {
-    width: 28px;
-    height: 28px;
-    font-size: 0.65rem;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .add-slide-btn {
-    width: 48px;
-    height: 48px;
-    bottom: 20px;
-    right: 20px;
-  }
-
-  .delete-slide-btn {
-    width: 40px;
-    height: 40px;
-    bottom: 20px;
-    right: 80px;
-  }
-
-    .import-btn {
-        font-size: 0.8rem;
-        padding: 6px 12px;
-        bottom: 20px;
-        left: 20px;
-    }
-
-    .bottom-left-controls {
-        bottom: 20px;
-        left: 20px;
-        gap: 8px;
-    }
-
-    .control-button {
-        font-size: 0.8rem;
-        padding: 6px 12px;
-    }
-
-  .modal-content {
-    padding: 20px;
-  }
-
-  #importTextarea {
-    min-height: 200px;
-  }
-}
+.reading-target { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 10px; font-size: 13px; line-height: 1.6; color: var(--accent); }
+.reading-target span { color: #66715f; }
+.duration-setting { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
+#durationInput { width: 100px; min-height: 44px; padding: 8px 10px; border: 1px solid #c5ccbd; border-radius: 10px; background: white; color: inherit; font: inherit; font-size: 16px; }
+#durationInput:invalid { border-color: #9b3d32; }

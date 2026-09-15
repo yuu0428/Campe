@@ -1,96 +1,50 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>プレゼンテーションメモ</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <!-- 左上: ページカウンター -->
-    <div class="page-counter">
-      <span id="currentPage">1</span>/<span id="totalPages">1</span>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f8f7f3">
+  <title>Campe — 発表のカンペ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="heading"><span class="brand">Campe<span class="dot">.</span></span><span class="page-count"><b id="currentPage">1</b> / <span id="totalPages">1</span></span></div>
+    <div class="timer">
+      <div><span class="eyebrow">経過時間</span><output id="stopwatchDisplay" aria-label="経過時間">00:00</output></div>
+      <div class="timer-actions"><button id="startBtn" class="primary">開始</button><button id="resetBtn" class="subtle">リセット</button></div>
     </div>
-
-    <!-- 上部中央: ストップウォッチ -->
-    <div class="stopwatch-container">
-      <span class="stopwatch-display" id="stopwatchDisplay">00:00:00</span>
-      <button id="startBtn" class="control-btn">スタート</button>
-      <button id="stopBtn" class="control-btn">ストップ</button>
-      <button id="resetBtn" class="control-btn">リセット</button>
-    </div>
-
-    <!-- 中央: メモ表示エリア -->
-    <div class="memo-container" id="memoContainer">
-      <div
-        class="memo-content"
-        id="memoContent"
-        contenteditable="false"
-        data-placeholder="メモを表示します"
-      ></div>
-    </div>
-
-    <!-- 右下: プラスボタン -->
-    <button class="add-slide-btn" id="addSlideBtn" title="スライドを追加">
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-      >
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-    </button>
-
-    <!-- 削除ボタン（2枚以上の時のみ表示） -->
-    <button
-      class="delete-slide-btn"
-      id="deleteSlideBtn"
-      title="このスライドを削除"
-    >
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-      >
-        <polyline points="3 6 5 6 21 6"></polyline>
-        <path
-          d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-        ></path>
-        <line x1="10" y1="11" x2="10" y2="17"></line>
-        <line x1="14" y1="11" x2="14" y2="17"></line>
-      </svg>
-    </button>
-
-    <!-- 左下のボタン群 -->
-    <div class="bottom-left-controls">
-      <button class="control-button" id="editBtn">Edit</button>
-      <button class="control-button" id="importBtn">インポート</button>
-    </div>
-
-    <!-- インポートモーダル -->
-    <div class="modal" id="importModal">
-        <div class="modal-content">
-            <textarea id="importTextarea" placeholder=""></textarea>
-            <div class="modal-buttons">
-                <button id="importConfirmBtn" class="modal-btn primary">OK</button>
-                <button id="importCancelBtn" class="modal-btn">キャンセル</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="app.js"></script>
-  </body>
+    <div class="reading-target" aria-label="読み終える目安"><strong id="readingDeadline"></strong><span id="readingDuration"></span></div>
+  </header>
+  <main id="memoContainer" tabindex="0" aria-label="発表原稿">
+    <div id="memoContent"></div>
+    <div id="emptyState"><span class="eyebrow">READY WHEN YOU ARE</span><h1>話すことを、<br>手のひらに。</h1><p>原稿を入れたら、発表の準備は完了。<br>時間を見ながら、自分のペースで。</p><button id="emptyEditBtn" class="primary">原稿を書く</button><button id="emptyImportBtn" class="subtle">まとめてインポート</button></div>
+  </main>
+  <footer>
+    <p id="scrollHint" hidden>続きは下にスクロール ↓</p>
+    <div class="tools"><button id="editBtn">編集</button><button id="importBtn">インポート</button><span class="spacer"></span><button id="smallerBtn" aria-label="文字を小さく">A−</button><button id="largerBtn" aria-label="文字を大きく">A＋</button></div>
+    <nav aria-label="ページ送り"><button id="prevBtn">← 前へ</button><span id="pageLabel">1 / 1</span><button id="nextBtn" class="primary">次へ →</button></nav>
+    <p id="status" role="status" hidden></p>
+  </footer>
+  <dialog id="editDialog">
+    <form method="dialog" id="editForm">
+      <div class="dialog-heading"><h2 id="editTitle">原稿を編集</h2><button value="close" aria-label="編集を閉じる">閉じる</button></div>
+      <p class="help">入力した内容は自動保存されます。</p>
+      <div class="duration-setting"><label for="durationInput">このページを読む時間（秒）</label><input id="durationInput" type="number" inputmode="numeric" min="1" max="86400" step="1" placeholder="自動" aria-describedby="durationHelp"></div>
+      <p class="help" id="durationHelp">空欄なら1分300文字で目安を計算。前のページからの合計が読み切る時刻になります。</p>
+      <textarea id="editTextarea" aria-label="このページの原稿" placeholder="このページで話すことを書いてください。"></textarea>
+      <div class="dialog-actions"><button type="button" id="deleteSlideBtn" class="danger">このページを削除</button><button type="button" id="addSlideBtn">ページを追加</button><button value="close" class="primary">完了</button></div>
+    </form>
+  </dialog>
+  <dialog id="importDialog">
+    <form method="dialog" id="importForm">
+      <div class="dialog-heading"><h2>原稿をインポート</h2><button value="cancel" aria-label="インポートを閉じる">閉じる</button></div>
+      <p class="help">変換したCampe原稿を、そのまま全部貼り付けてください。ページと秒数をまとめて取り込みます。<br>通常の文章は空行でページを分割します。現在の原稿を置き換えます。</p>
+      <textarea id="importTextarea" aria-label="まとめて取り込む原稿" placeholder="1ページ目の原稿\n\n2ページ目の原稿"></textarea>
+      <p id="importError" class="help" role="alert" hidden></p>
+      <div class="dialog-actions"><button value="cancel">キャンセル</button><button type="button" id="importConfirmBtn" class="primary">取り込む</button></div>
+    </form>
+  </dialog>
+  <script src="app.js"></script>
+</body>
 </html>

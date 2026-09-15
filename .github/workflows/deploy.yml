@@ -28,10 +28,16 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Prepare static site
+        run: |
+          mkdir -p _site
+          cp index.html app.js style.css _site/
+          if [ -d nova-01-preview ]; then cp -R nova-01-preview _site/; fi
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "."
+          path: "_site"
 
       - name: Deploy to GitHub Pages
         id: deployment
