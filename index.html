@@ -14,6 +14,8 @@
       <div class="timer-actions"><button id="startBtn" class="primary">開始</button><button id="resetBtn" class="subtle">リセット</button><button id="menuBtn" class="subtle" aria-label="メニューを開く" aria-haspopup="dialog">⋯</button></div>
     </div>
     <div class="reading-target" aria-label="読み終える目安"><strong id="readingDeadline"></strong></div>
+    <div class="pace" id="pace"><span id="readingDuration"></span><strong id="paceStatus"></strong></div>
+    <progress id="paceProgress" max="1" value="0" aria-label="このページの予定時間の進み具合"></progress>
     <p id="status" role="status" hidden></p>
   </header>
   <main id="memoContainer" tabindex="0" aria-label="発表原稿">
@@ -22,7 +24,7 @@
   </main>
   <dialog id="menuDialog" aria-labelledby="menuTitle">
     <div class="dialog-heading"><h2 id="menuTitle">メニュー</h2><button id="closeMenuBtn">閉じる</button></div>
-    <p class="help"><b id="currentPage">1</b> / <span id="totalPages">1</span>ページ · <span id="readingDuration"></span></p>
+    <p class="help"><b id="currentPage">1</b> / <span id="totalPages">1</span>ページ</p>
     <div class="display-modes" role="group" aria-label="原稿の表示方法"><button id="readableMode" aria-pressed="true">読みやすいサイズ</button><button id="fitMode" aria-pressed="false">全文を収める</button></div>
 
     <div class="tools"><button id="editBtn">編集</button><button id="importBtn">インポート</button><span class="spacer"></span><button id="smallerBtn" aria-label="文字を小さく">A−</button><button id="largerBtn" aria-label="文字を大きく">A＋</button></div>

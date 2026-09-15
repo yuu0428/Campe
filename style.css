@@ -68,3 +68,17 @@ header { padding: 8px 14px; }
 main { padding: 14px 18px 18px; }
 #menuDialog .display-modes { margin-top: 16px; }
 @media (min-width: 800px) { header { padding-left: max(18px, calc((100% - 820px) / 2)); padding-right: max(18px, calc((100% - 820px) / 2)); } }
+
+.pace { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 12px; line-height: 1.8; font-variant-numeric: tabular-nums; }
+#readingDuration { color: #66715f; }
+#paceStatus { color: #315c46; }
+.pace[data-state="soon"] #paceStatus { color: #956100; }
+.pace[data-state="late"] #paceStatus { color: #b03929; }
+#paceProgress { display: block; width: 100%; height: 3px; margin-top: 2px; border: 0; appearance: none; background: #e1e7dc; color: #315c46; }
+#paceProgress::-webkit-progress-bar { background: #e1e7dc; }
+#paceProgress::-webkit-progress-value { background: #315c46; }
+#paceProgress::-moz-progress-bar { background: #315c46; }
+#paceProgress[data-state="soon"]::-webkit-progress-value { background: #956100; }
+#paceProgress[data-state="late"]::-webkit-progress-value { background: #b03929; }
+#paceProgress[data-state="soon"]::-moz-progress-bar { background: #956100; }
+#paceProgress[data-state="late"]::-moz-progress-bar { background: #b03929; }

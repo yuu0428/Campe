@@ -94,11 +94,22 @@ function formatTarget(seconds) {
   return minutes ? `${minutes}分${seconds % 60}秒` : `${seconds}秒`;
 }
 
+function elapsedSeconds() {
+  return Math.max(0, Math.floor((elapsed + (startedAt === null ? 0 : Date.now() - startedAt)) / 1000));
+}
+
 function updateReadingTarget() {
   const duration = readingSeconds(slides[currentSlideIndex]);
   const target = slides.slice(0, currentSlideIndex + 1).reduce((sum, slide) => sum + readingSeconds(slide), 0);
   $("readingDuration").textContent = `このページ：${duration}秒${slides[currentSlideIndex].durationSeconds == null ? "（目安）" : ""}`;
   $("readingDeadline").textContent = `開始から${formatTarget(target)}までに読み切る`;
+  const remaining = target - elapsedSeconds();
+  const active = startedAt !== null || elapsed > 0;
+  const state = !active ? "ready" : remaining < 0 ? "late" : remaining <= Math.min(10, duration * 0.2) ? "soon" : "on-time";
+  $("pace").setAttribute("data-state", state);
+  $("paceStatus").textContent = !active ? "開始前" : remaining < 0 ? `${-remaining}秒遅れ` : remaining === 0 ? "切り替えの目安" : `あと${remaining}秒`;
+  $("paceProgress").value = active && duration > 0 ? Math.max(0, Math.min(1, (duration - remaining) / duration)) : 0;
+  $("paceProgress").setAttribute("data-state", state);
 }
 
 function render() {
@@ -284,7 +295,8 @@ document.addEventListener("keydown", (event) => {
 });
 
 function updateTimer() {
-  const seconds = Math.floor((elapsed + (startedAt === null ? 0 : Date.now() - startedAt)) / 1000);
+  const seconds = elapsedSeconds();
+  updateReadingTarget();
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor(seconds / 60) % 60;
   const parts = [minutes, seconds % 60].map((part) => String(part).padStart(2, "0"));
