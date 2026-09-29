@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>SKYRUN Flight Simulator</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cesium@1.132/Build/Cesium/Widgets/widgets.css"/>
+<style>
+:root{--c:#dff7ff;--a:#77e8ff;--bg:rgba(4,12,22,.68);--line:rgba(223,247,255,.42)}
+*{box-sizing:border-box}html,body,#map{width:100%;height:100%;margin:0;overflow:hidden;background:#07111c;color:#fff;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+button,input{font:inherit;color:inherit}.glass{background:var(--bg);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.12);box-shadow:0 8px 35px rgba(0,0,0,.25)}
+#top{position:fixed;z-index:20;top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:min(900px,calc(100% - 20px));height:54px;border-radius:16px;display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;padding:7px 9px}
+.brand{padding:0 7px;font-weight:800;letter-spacing:.14em}.brand small{display:block;font-size:8px;opacity:.5;letter-spacing:.18em}
+.search{display:flex;height:38px;border-radius:11px;background:rgba(255,255,255,.06);overflow:hidden}.search input{flex:1;min-width:0;border:0;background:transparent;padding:0 11px;outline:none}.search button,.topbtn{border:0;background:rgba(255,255,255,.07);border-radius:10px;padding:0 12px;cursor:pointer}.search button{border-radius:0;width:44px}
+#hud{position:fixed;inset:0;z-index:10;pointer-events:none;color:var(--c);text-shadow:0 1px 2px #000}
+.heading{position:absolute;top:13%;left:50%;transform:translateX(-50%);width:min(360px,60vw);text-align:center;border-bottom:1px solid var(--line);padding:0 0 7px;font-size:19px;font-weight:700}.heading:after{content:"";position:absolute;bottom:-7px;left:50%;border:5px solid transparent;border-top-color:var(--c);transform:translateX(-50%)}
+.box{position:absolute;top:50%;transform:translateY(-50%);width:110px;border-block:1px solid var(--line);padding:8px}.box.l{left:7vw;text-align:right}.box.r{right:7vw}.box label{display:block;font-size:9px;opacity:.55;letter-spacing:.15em}.box strong{font-size:38px;font-weight:500;font-variant-numeric:tabular-nums}.box span{font-size:9px;opacity:.55}
+.ret{position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);display:flex;gap:8px;align-items:center}.ret i{width:54px;height:1px;background:var(--c)}.ret b{width:10px;height:10px;border:1px solid var(--c);border-radius:50%}
+.pitch{position:absolute;left:50%;top:50%;width:220px;height:180px;transform:translate(-50%,-50%) rotate(var(--roll,0deg));transition:transform .05s linear}.pl{position:absolute;left:50%;width:70px;height:1px;background:rgba(223,247,255,.58);transform:translateX(-50%) translateY(var(--off,0px))}.pl:after{content:attr(data-v);position:absolute;left:82px;top:-6px;font-size:9px;opacity:.6}.p20{top:20px}.p10{top:55px}.p0{top:90px;width:120px}.n10{top:125px}.n20{top:160px}
+.info{position:fixed;z-index:16;bottom:max(14px,env(safe-area-inset-bottom));padding:9px 11px;border-radius:13px;font-size:10px}.info.left{left:12px;display:flex;gap:14px}.info.right{right:12px;text-align:right;max-width:48vw}.kv span{display:block;font-size:8px;opacity:.5;letter-spacing:.1em}.kv b{font-size:14px}.status{margin-top:4px;color:var(--a);font-size:8px;letter-spacing:.09em}
+#plane{position:fixed;z-index:11;left:50%;top:61%;transform:translate(-50%,-50%);width:120px;pointer-events:none;filter:drop-shadow(0 8px 14px #0008);transition:opacity .2s}#plane svg{width:100%;fill:#0d1824e8;stroke:#dff7ff88;stroke-width:1.2}
+#toast{position:fixed;z-index:50;left:50%;top:80px;transform:translate(-50%,-8px);opacity:0;transition:.2s;padding:9px 13px;border-radius:10px;background:#06101de8;border:1px solid #ffffff1f;pointer-events:none;font-size:12px;max-width:90vw}#toast.on{opacity:1;transform:translate(-50%,0)}
+dialog{border:0;background:transparent;color:#fff;width:min(640px,calc(100% - 24px))}dialog::backdrop{background:#020812cc;backdrop-filter:blur(7px)}.panel{padding:20px;border-radius:20px;background:#081321f7;border:1px solid #ffffff22}.panel h2{margin:0 0 8px}.panel p{font-size:12px;line-height:1.6;opacity:.68}.row{display:grid;grid-template-columns:1fr auto;gap:8px}.row input,select{height:42px;border-radius:10px;border:1px solid #ffffff22;background:#ffffff10;padding:0 10px}.primary{background:#dff7ff;color:#081321;border:0;border-radius:10px;padding:0 14px;font-weight:800}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.actions button{height:38px;border:1px solid #ffffff22;border-radius:10px;background:#ffffff10;padding:0 12px}
+.touch{display:none}
+@media(max-width:760px){
+#top{height:51px;grid-template-columns:auto 1fr auto;padding:6px}.brand small{display:none}.brand{font-size:12px;padding:0 4px}.topbtn{padding:0 9px;height:37px}.search{height:37px}
+.box{width:80px}.box strong{font-size:27px}.box.l{left:3vw}.box.r{right:3vw}.heading{top:10%;width:48vw}.info{bottom:112px;padding:7px 8px}.info.left{gap:8px}.info.left .hideM{display:none}#plane{width:90px;top:58%}
+.touch{display:flex;position:fixed;z-index:25;left:0;right:0;bottom:max(10px,env(safe-area-inset-bottom));justify-content:space-between;align-items:flex-end;padding:0 12px;pointer-events:none}.stick,.rightTouch,.yaw,.thr{pointer-events:auto}
+.stick{width:112px;height:112px;border:1px solid #ffffff33;border-radius:50%;background:#ffffff0d;backdrop-filter:blur(6px);position:relative}.knob{position:absolute;width:42px;height:42px;border:1px solid #ffffff55;border-radius:50%;background:#dff7ff20;left:50%;top:50%;transform:translate(-50%,-50%)}
+.rightTouch{display:flex;align-items:flex-end;gap:7px}.yaw{width:42px;height:42px;border-radius:50%;border:1px solid #ffffff33;background:#08132199;font-size:20px}.thr{width:42px;height:112px;border:1px solid #ffffff33;border-radius:22px;background:#08132199;position:relative}.track{position:absolute;left:50%;top:11px;bottom:11px;width:4px;transform:translateX(-50%);background:#ffffff22;border-radius:3px;overflow:hidden}.fill{position:absolute;left:0;right:0;bottom:0;height:50%;background:var(--a)}.tknob{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:30px;height:18px;border:1px solid #ffffff55;border-radius:8px;background:#dff7ff22}
+}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="top" class="glass">
+  <div class="brand">SKYRUN<small>PHOTOREAL FLIGHT</small></div>
+  <div class="search"><input id="q" placeholder="地名・空港・住所を検索"/><button id="go">⌕</button></div>
+  <button class="topbtn" id="view">CHASE</button>
+  <button class="topbtn" id="settings">⚙</button>
+</div>
+<div id="hud">
+  <div class="heading" id="hdg">000°</div>
+  <div class="box l"><label>AIRSPEED</label><strong id="spd">115</strong><span>m/s</span></div>
+  <div class="box r"><label>ALTITUDE</label><strong id="alt">4700</strong><span>m</span></div>
+  <div class="pitch" id="pitch">
+    <div class="pl p20" data-v="+20"></div><div class="pl p10" data-v="+10"></div><div class="pl p0" data-v="0"></div><div class="pl n10" data-v="-10"></div><div class="pl n20" data-v="-20"></div>
+  </div>
+  <div class="ret"><i></i><b></b><i></i></div>
+</div>
+<div id="plane"><svg viewBox="0 0 160 100"><path d="M80 2l10 37 53 15v10L91 58l-5 24 20 9v7L80 93 54 98v-7l20-9-5-24-52 6V54l52-15z"/></svg></div>
+<div class="info left glass">
+  <div class="kv"><span>THROTTLE</span><b id="thr">50%</b></div>
+  <div class="kv hideM"><span>VERT SPEED</span><b id="vs">0</b></div>
+  <div class="kv hideM"><span>BANK</span><b id="bank">0°</b></div>
+</div>
+<div class="info right glass"><div id="place">富士山上空</div><div id="coord" style="opacity:.55;margin-top:2px"></div><div class="status" id="tile">STANDARD GLOBE</div></div>
+<div id="toast"></div>
+<div class="touch">
+ <div class="stick" id="stick"><div class="knob" id="knob"></div></div>
+ <div class="rightTouch"><button class="yaw" id="yl">↶</button><button class="yaw" id="yr">↷</button><div class="thr" id="tzone"><div class="track"><div class="fill" id="tfill"></div></div><div class="tknob" id="tknob"></div></div></div>
+</div>
+<dialog id="dlg"><div class="panel">
+ <h2>SKYRUN SETTINGS</h2>
+ <p>Google Cloud で Map Tiles API を有効化した API キーを入れると、Google Photorealistic 3D Tiles に切り替わります。公開時は HTTP referrer と API 制限を設定してください。</p>
+ <div class="row"><input id="key" type="password" placeholder="Google Maps Platform API key"/><button class="primary" id="apply">3Dを有効化</button></div>
+ <div class="actions">
+  <select id="preset"><option value="fuji">富士山</option><option value="tokyo">東京</option><option value="kofu">甲府</option><option value="nyc">New York</option><option value="paris">Paris</option></select>
+  <button id="jump">この地点から再スタート</button><button id="clear">APIキー削除</button><button id="close">閉じる</button>
+ </div>
+</div></dialog>
+<script src="https://cdn.jsdelivr.net/npm/cesium@1.132/Build/Cesium/Cesium.js"></script>
+<script>
+(()=>{
+const C=window.Cesium,$=id=>document.getElementById(id),rad=C.Math.toRadians,deg=C.Math.toDegrees,clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),R=6378137,G=9.80665;
+const presets={fuji:{name:"富士山",lat:35.3606,lon:138.7274,alt:4700,h:325},tokyo:{name:"東京",lat:35.6812,lon:139.7671,alt:1500,h:220},kofu:{name:"甲府",lat:35.6623,lon:138.5683,alt:1600,h:250},nyc:{name:"New York",lat:40.7128,lon:-74.006,alt:1400,h:30},paris:{name:"Paris",lat:48.8566,lon:2.3522,alt:1200,h:300}};
+const s={...presets.fuji,heading:rad(325),pitch:rad(-3),roll:0,speed:115,throttle:.5,vs:0,view:"chase",ground:0},inp={p:0,r:0,y:0,td:0,tp:0,tr:0,ty:0};
+let tiles=null,last=performance.now(),lastGeo=0,lastPos={lat:s.lat,lon:s.lon},toastT;
+const viewer=new C.Viewer("map",{animation:false,timeline:false,fullscreenButton:false,vrButton:false,geocoder:false,homeButton:false,infoBox:false,selectionIndicator:false,sceneModePicker:false,baseLayerPicker:false,navigationHelpButton:false,baseLayer:false,terrainProvider:new C.EllipsoidTerrainProvider(),contextOptions:{webgl:{antialias:true}}});
+viewer.scene.globe.baseColor=C.Color.fromCssColorString("#263849");viewer.scene.globe.enableLighting=true;viewer.scene.globe.depthTestAgainstTerrain=true;viewer.scene.fog.enabled=true;viewer.scene.screenSpaceCameraController.enableInputs=false;
+viewer.imageryLayers.addImageryProvider(new C.OpenStreetMapImageryProvider({url:"https://tile.openstreetmap.org/",credit:"© OpenStreetMap contributors"}));
+function toast(t){$("toast").textContent=t;$("toast").classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>$("toast").classList.remove("on"),3500)}
+async function google3d(key){
+ if(!key){if(tiles){viewer.scene.primitives.remove(tiles);tiles=null}viewer.scene.globe.show=true;for(let i=0;i<viewer.imageryLayers.length;i++)viewer.imageryLayers.get(i).show=true;$("tile").textContent="STANDARD GLOBE";return}
+ $("tile").textContent="LOADING GOOGLE 3D…";
+ try{if(tiles)viewer.scene.primitives.remove(tiles);tiles=await C.Cesium3DTileset.fromUrl("https://tile.googleapis.com/v1/3dtiles/root.json?key="+encodeURIComponent(key),{showCreditsOnScreen:true,maximumScreenSpaceError:12,dynamicScreenSpaceError:true,cacheBytes:536870912});viewer.scene.primitives.add(tiles);viewer.scene.globe.show=false;for(let i=0;i<viewer.imageryLayers.length;i++)viewer.imageryLayers.get(i).show=false;$("tile").textContent="GOOGLE PHOTOREALISTIC 3D";toast("Photorealistic 3D を有効化しました")}
+ catch(e){console.error(e);$("tile").textContent="3D TILE ERROR";toast("APIキー / Map Tiles API 設定を確認してください");viewer.scene.globe.show=true}
+}
+function reset(p){s.lat=p.lat;s.lon=p.lon;s.alt=p.alt;s.heading=rad(p.h||0);s.pitch=rad(-3);s.roll=0;s.speed=115;s.throttle=.5;s.vs=0;$("place").textContent=p.name+"上空";syncThrottle();camera()}
+function physics(dt){dt=Math.min(.05,dt);const p=clamp(inp.p+inp.tp,-1,1),r=clamp(inp.r+inp.tr,-1,1),y=clamp(inp.y+inp.ty,-1,1);s.pitch=clamp(s.pitch+p*rad(38)*dt,rad(-50),rad(50));if(Math.abs(r)>.01)s.roll+=r*rad(70)*dt;else s.roll*=Math.pow(.12,dt);s.roll=clamp(s.roll,rad(-78),rad(78));s.throttle=clamp(s.throttle+inp.td*.38*dt,0,1);const target=55+s.throttle*245;s.speed+=(target-s.speed)*Math.min(1,dt*.55);s.heading=C.Math.zeroToTwoPi(s.heading+(G*Math.tan(s.roll)/Math.max(45,s.speed)+y*rad(24))*dt);const fp=s.pitch-rad(1.8)*(1-s.throttle);s.vs=s.speed*Math.sin(fp);const hs=Math.max(0,s.speed*Math.cos(fp)),n=Math.cos(s.heading)*hs*dt,e=Math.sin(s.heading)*hs*dt;s.lat+=deg(n/R);s.lon+=deg(e/(R*Math.max(.05,Math.cos(rad(s.lat)))));if(s.lon>180)s.lon-=360;if(s.lon<-180)s.lon+=360;s.lat=clamp(s.lat,-85,85);s.alt=Math.max(10,s.alt+s.vs*dt)}
+function camera(){const ac=C.Cartesian3.fromDegrees(s.lon,s.lat,s.alt);if(s.view==="cockpit"){viewer.camera.setView({destination:ac,orientation:{heading:s.heading,pitch:s.pitch,roll:s.roll}});return}const enu=C.Transforms.eastNorthUpToFixedFrame(ac),f=new C.Cartesian3(Math.sin(s.heading)*Math.cos(s.pitch),Math.cos(s.heading)*Math.cos(s.pitch),Math.sin(s.pitch)),d=clamp(250+s.speed*.8,280,520),off=new C.Cartesian3(-f.x*d,-f.y*d,-f.z*d+95),cp=C.Matrix4.multiplyByPoint(enu,off,new C.Cartesian3());viewer.camera.setView({destination:cp,orientation:{heading:s.heading,pitch:s.pitch-rad(2.5),roll:s.roll*.72}})}
+function ui(){$("spd").textContent=Math.round(s.speed);$("alt").textContent=Math.round(s.alt);$("hdg").textContent=String(Math.round(deg(s.heading))%360).padStart(3,"0")+"°";$("vs").textContent=(s.vs>=0?"+":"")+Math.round(s.vs);$("bank").textContent=Math.round(deg(s.roll))+"°";$("thr").textContent=Math.round(s.throttle*100)+"%";$("coord").textContent=s.lat.toFixed(4)+"°, "+s.lon.toFixed(4)+"°";$("pitch").style.setProperty("--roll",deg(s.roll)+"deg");document.querySelectorAll(".pl").forEach(x=>x.style.setProperty("--off",(-deg(s.pitch)*3)+"px"))}
+function syncThrottle(){$("tfill").style.height=(s.throttle*100)+"%";$("tknob").style.top=((1-s.throttle)*82+15)+"%"}
+async function reverse(){const d=Math.hypot(s.lat-lastPos.lat,s.lon-lastPos.lon);if(d<.025)return;lastPos={lat:s.lat,lon:s.lon};try{const r=await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+s.lat+"&lon="+s.lon+"&zoom=10",{headers:{"Accept-Language":"ja"}});const j=await r.json();$("place").textContent=j.display_name?j.display_name.split(",").slice(0,2).join(" / "):"飛行中"}catch{}}
+async function search(){const q=$("q").value.trim();if(!q)return;toast("検索中…");try{const r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q="+encodeURIComponent(q),{headers:{"Accept-Language":"ja"}}),a=await r.json();if(!a[0])return toast("見つかりませんでした");s.lat=+a[0].lat;s.lon=+a[0].lon;s.alt=1800;s.heading=0;$("place").textContent=a[0].display_name;camera();toast("移動しました")}catch{toast("検索に失敗しました")}}
+const keys={KeyW:["p",1],KeyS:["p",-1],KeyA:["r",-1],KeyD:["r",1],KeyQ:["y",-1],KeyE:["y",1],ShiftLeft:["td",1],ShiftRight:["td",1],ControlLeft:["td",-1],ControlRight:["td",-1]};
+addEventListener("keydown",e=>{if(e.repeat)return;if(keys[e.code]){inp[keys[e.code][0]]=keys[e.code][1];e.preventDefault()}if(e.code==="KeyV")$("view").click()});
+addEventListener("keyup",e=>{if(keys[e.code])inp[keys[e.code][0]]=0});
+$("go").onclick=search;$("q").onkeydown=e=>{if(e.key==="Enter")search()};$("view").onclick=()=>{s.view=s.view==="chase"?"cockpit":"chase";$("view").textContent=s.view.toUpperCase();$("plane").style.opacity=s.view==="cockpit"?"0":"1";camera()};
+$("settings").onclick=()=>{$("key").value=localStorage.getItem("skyrun:key")||"";$("dlg").showModal()};$("close").onclick=()=>$("dlg").close();$("apply").onclick=()=>{const k=$("key").value.trim();localStorage.setItem("skyrun:key",k);google3d(k);$("dlg").close()};$("clear").onclick=()=>{localStorage.removeItem("skyrun:key");$("key").value="";google3d("");toast("APIキーを削除しました")};$("jump").onclick=()=>{reset(presets[$("preset").value]);$("dlg").close()};
+function stick(){let active=false,id;const z=$("stick"),k=$("knob"),move=e=>{const r=z.getBoundingClientRect(),x=clamp(e.clientX-(r.left+r.width/2),-43,43),y=clamp(e.clientY-(r.top+r.height/2),-43,43);inp.tr=x/43;inp.tp=-y/43;k.style.transform="translate(calc(-50% + "+x+"px),calc(-50% + "+y+"px))"};z.onpointerdown=e=>{active=true;id=e.pointerId;z.setPointerCapture(id);move(e)};z.onpointermove=e=>{if(active&&e.pointerId===id)move(e)};z.onpointerup=z.onpointercancel=e=>{active=false;inp.tr=inp.tp=0;k.style.transform="translate(-50%,-50%)"}}
+function throttleTouch(){const z=$("tzone");const set=e=>{const r=z.getBoundingClientRect();s.throttle=clamp(1-(e.clientY-r.top)/r.height,0,1);syncThrottle()};z.onpointerdown=e=>{z.setPointerCapture(e.pointerId);set(e)};z.onpointermove=e=>{if(z.hasPointerCapture(e.pointerId))set(e)}}
+function hold(btn,v){const el=$(btn);el.onpointerdown=e=>{el.setPointerCapture(e.pointerId);inp.ty=v};el.onpointerup=el.onpointercancel=()=>inp.ty=0}stick();throttleTouch();hold("yl",-1);hold("yr",1);
+function frame(t){const dt=(t-last)/1000;last=t;physics(dt);camera();ui();if(t-lastGeo>12000){lastGeo=t;reverse()}requestAnimationFrame(frame)}
+reset(presets.fuji);syncThrottle();const saved=localStorage.getItem("skyrun:key");if(saved)google3d(saved);requestAnimationFrame(frame);
+})();
+</script>
+</body></html>
